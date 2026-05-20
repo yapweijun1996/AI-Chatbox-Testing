@@ -278,6 +278,24 @@ body {
 .form-group input:focus { border-color: var(--accent-color); }
 .privacy-warning { font-size: 10px; color: var(--text-secondary); text-align: center; margin-top: auto; }
 
+/* Micro Telemetry Performance Badge Style */
+.message-meta {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border-subtle);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  opacity: 0.45;
+  transition: opacity 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", monospace;
+}
+.message-item:hover .message-meta {
+  opacity: 0.9;
+}
+
 /* Icons & Pre formatting */
 .icon-plus::before { content: "+"; font-size: 16px; font-weight: bold; }
 .icon-theme::before { content: "☼"; font-size: 14px; }

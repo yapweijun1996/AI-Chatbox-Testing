@@ -1,6 +1,6 @@
 /**
  * Simple, dependency-free Markdown Parser and HTML Escape Utility.
- * Keeps app.js focused on core flow and within the strict line limits.
+ * Extended with Apple HIG performance telemetry rendering widgets.
  */
 
 function escapeHTML(str) {
@@ -43,6 +43,23 @@ function parseMarkdown(text) {
   }).join("");
 
   return formatted;
+}
+
+function renderPerformanceBadge(perf) {
+  if (!perf) return "";
+  
+  const ttftStr = perf.ttft < 1000 ? `${Math.round(perf.ttft)}ms` : `${(perf.ttft / 1000).toFixed(2)}s`;
+  const tpsStr = perf.tps > 0 && isFinite(perf.tps) ? perf.tps.toFixed(1) : "0.0";
+  const itlStr = perf.itl > 0 && isFinite(perf.itl) ? `${Math.round(perf.itl)}ms` : "N/A";
+  
+  return `
+    <div class="message-meta">
+      <span> TTFT: ${ttftStr}</span>
+      <span>Speed: ${tpsStr} tps</span>
+      <span>ITL: ${itlStr}</span>
+      <span>(${Math.round(perf.tokenCount)} tokens est.)</span>
+    </div>
+  `;
 }
 
 // Clipboard copier helper

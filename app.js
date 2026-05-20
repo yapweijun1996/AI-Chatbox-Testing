@@ -199,16 +199,19 @@ function initEventListeners() {
 
 function renderMessages(messages) {
   DOM.messagesList.innerHTML = "";
-  messages.forEach(msg => appendMessageToDOM(msg.role, msg.content));
+  messages.forEach(msg => appendMessageToDOM(msg.role, msg.content, msg.performance));
   scrollToBottom();
 }
 
-function appendMessageToDOM(role, content) {
+function appendMessageToDOM(role, content, performanceData = null) {
   const item = document.createElement("div");
   item.className = `message-item ${role}`;
   const bubble = document.createElement("div");
   bubble.className = "message-bubble";
   bubble.innerHTML = parseMarkdown(content);
+  if (role === "assistant" && performanceData) {
+    bubble.innerHTML += renderPerformanceBadge(performanceData);
+  }
   item.appendChild(bubble);
   DOM.messagesList.appendChild(item);
   return bubble;
@@ -243,6 +246,10 @@ async function handleSend() {
   const dot = DOM.statusPill.querySelector(".status-dot");
   dot.className = "status-dot yellow";
   DOM.statusText.textContent = "Generating...";
+
+  const streamStartTime = performance.now();
+  let firstTokenReceived = false;
+  let ttft = 0;
 
   try {
     const messages = await getMessages(activeSessionId);
@@ -283,7 +290,12 @@ async function handleSend() {
         if (cleaned.startsWith("data: ")) {
           try {
             const parsed = JSON.parse(cleaned.slice(6));
-            aiResponse += parsed.choices?.[0]?.delta?.content || "";
+            const delta = parsed.choices?.[0]?.delta?.content || "";
+            if (!firstTokenReceived && delta.trim().length > 0) {
+              firstTokenReceived = true;
+              ttft = performance.now() - streamStartTime;
+            }
+            aiResponse += delta;
             aiBubble.innerHTML = parseMarkdown(aiResponse);
             scrollToBottom();
           } catch (err) {}
@@ -291,7 +303,18 @@ async function handleSend() {
       }
     }
 
-    await addMessage(activeSessionId, "assistant", aiResponse);
+    const streamEndTime = performance.now();
+    const e2e = streamEndTime - streamStartTime;
+    const tokenCount = Math.max(1, aiResponse.length / 3.2);
+    const decodeDuration = (e2e - ttft) / 1000;
+    const tps = decodeDuration > 0 ? (tokenCount / decodeDuration) : 0;
+    const itl = tokenCount > 0 ? ((e2e - ttft) / tokenCount) : 0;
+    const perfData = { ttft, tps, itl, tokenCount, e2e };
+
+    aiBubble.innerHTML += renderPerformanceBadge(perfData);
+    scrollToBottom();
+
+    await addMessage(activeSessionId, "assistant", aiResponse, perfData);
     await loadSessions();
   } catch (err) {
     console.error("Direct API Streaming failed: ", err);

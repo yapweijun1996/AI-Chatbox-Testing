@@ -173,13 +173,14 @@ function deleteSession(sessionId) {
 }
 
 // Messages management
-function addMessage(sessionId, role, content) {
+function addMessage(sessionId, role, content, performance = null) {
   return new Promise((resolve, reject) => {
     const msg = {
       sessionId: Number(sessionId),
       role,
       content,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      performance
     };
     if (useFallback) {
       msg.id = Date.now() + Math.random();

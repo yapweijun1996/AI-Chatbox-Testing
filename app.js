@@ -1,17 +1,17 @@
-// Application State & DOM Cache
-let activeSessionId = null;
-let currentProvider = localStorage.getItem("lastProvider") || "openai";
+// Application State & DOM Cache (Global Scope Shared)
+var activeSessionId = null;
+var currentProvider = localStorage.getItem("lastProvider") || "openai";
 const supportedLocales = ["en", "zh", "ms", "ja", "vi"];
 const getSystemLocale = () => {
   const sysLang = navigator.language.slice(0, 2);
   return supportedLocales.includes(sysLang) ? sysLang : "en";
 };
-let currentLocale = localStorage.getItem("lastLocale") || getSystemLocale();
-let activeConfig = null;
-let activeAbortController = null;
+var currentLocale = localStorage.getItem("lastLocale") || getSystemLocale();
+var activeConfig = null;
+var activeAbortController = null;
 
 const getEl = id => document.getElementById(id);
-const DOM = {
+var DOM = {
   themeBtn: getEl("theme-toggle-btn"), settingsBtn: getEl("settings-toggle-btn"), sidebarToggleBtn: getEl("sidebar-toggle-btn"), sidebar: getEl("sidebar"),
   newChatBtn: getEl("new-chat-btn"), closeSettingsBtn: getEl("close-settings-btn"), settingsDrawer: getEl("settings-drawer"),
   providerTabs: document.querySelectorAll(".tab-btn"), providerForm: getEl("provider-form"), baseUrlInput: getEl("setting-base-url"),
@@ -32,79 +32,19 @@ window.addEventListener("DOMContentLoaded", async () => {
   await switchProviderTab(currentProvider);
   applyLanguage(currentLocale);
   getEl("setting-locale").value = currentLocale;
-  if (window.innerWidth <= 768) DOM.sidebar.classList.add("collapsed");
+  
+  // Restore sidebar state from localStorage
+  const sidebarState = localStorage.getItem("sidebarCollapsed");
+  if (sidebarState === "true" || (sidebarState === null && window.innerWidth <= 768)) {
+    DOM.sidebar.classList.add("collapsed");
+  } else {
+    DOM.sidebar.classList.remove("collapsed");
+  }
+  
   initEventListeners();
   initTooltips();
   registerServiceWorker();
 });
-
-async function loadSessions() {
-  const sessions = await getSessions();
-  DOM.sessionsList.innerHTML = "";
-  if (sessions.length === 0) { showWelcomeState(true); return; }
-  sessions.forEach(session => {
-    const activeClass = activeSessionId === session.id ? "active" : "";
-    const item = document.createElement("div");
-    item.className = `session-item ${activeClass}`;
-    item.dataset.id = session.id;
-    item.innerHTML = `
-      <span class="session-title">${escapeHTML(session.title)}</span>
-      <button class="session-delete" onclick="event.stopPropagation(); handleDeleteSession(${session.id})">&times;</button>
-    `;
-    item.addEventListener("click", () => selectSession(session.id));
-    
-    const titleEl = item.querySelector(".session-title");
-    titleEl.addEventListener("dblclick", (e) => {
-      e.stopPropagation();
-      const input = document.createElement("input");
-      input.type = "text";
-      input.className = "session-rename-input";
-      input.value = session.title;
-      titleEl.replaceWith(input);
-      input.focus();
-      
-      let saved = false;
-      const saveRename = async () => {
-        if (saved) return;
-        saved = true;
-        const newTitle = input.value.trim();
-        if (newTitle && newTitle !== session.title) {
-          await updateSessionTitle(session.id, newTitle);
-          session.title = newTitle;
-        }
-        await loadSessions();
-      };
-      input.addEventListener("keydown", (evt) => {
-        if (evt.key === "Enter" && !evt.shiftKey) saveRename();
-        if (evt.key === "Escape") loadSessions();
-      });
-      input.addEventListener("blur", saveRename);
-    });
-    DOM.sessionsList.appendChild(item);
-  });
-}
-
-async function selectSession(sessionId) {
-  activeSessionId = sessionId;
-  showWelcomeState(false);
-  document.querySelectorAll(".session-item").forEach(item => {
-    item.classList.toggle("active", Number(item.dataset.id) === sessionId);
-  });
-  renderMessages(await getMessages(sessionId));
-}
-
-function showWelcomeState(show) {
-  DOM.welcomeView.style.display = show ? "block" : "none";
-  if (show) { DOM.messagesList.innerHTML = ""; activeSessionId = null; }
-}
-
-window.handleDeleteSession = async (sessionId) => {
-  if (confirm("Are you sure you want to delete this session and all its message history?")) {
-    await deleteSession(sessionId);
-    if (activeSessionId === sessionId) showWelcomeState(true);
-    await loadSessions();
-  }
-};
 
 async function switchProviderTab(provider) {
   currentProvider = provider;
@@ -169,7 +109,7 @@ DOM.providerForm.addEventListener("submit", async (e) => {
 
 function setSendButtonState(isGen) {
   DOM.sendBtn.disabled = isGen ? false : DOM.chatInput.value.trim() === "";
-  DOM.sendBtn.innerHTML = isGen ? `<span class="icon-stop" style="color: #FF453A; font-size: 10px; font-weight: bold;">■</span>` : `<span class="icon-arrow-up"></span>`;
+  DOM.sendBtn.innerHTML = isGen ? `<svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" stroke="#FF453A" stroke-width="2" fill="#FF453A" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect></svg>` : `<svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>`;
   DOM.sendBtn.style.backgroundColor = isGen ? "rgba(255, 69, 58, 0.15)" : "";
   DOM.sendBtn.classList.toggle("generating", isGen);
 }
@@ -178,7 +118,10 @@ function initEventListeners() {
   DOM.themeBtn.addEventListener("click", toggleTheme);
   DOM.settingsBtn.addEventListener("click", () => { DOM.settingsDrawer.classList.add("open"); refreshTabIndicators(); });
   DOM.closeSettingsBtn.addEventListener("click", () => DOM.settingsDrawer.classList.remove("open"));
-  DOM.sidebarToggleBtn.addEventListener("click", () => DOM.sidebar.classList.toggle("collapsed"));
+  DOM.sidebarToggleBtn.addEventListener("click", () => {
+    DOM.sidebar.classList.toggle("collapsed");
+    localStorage.setItem("sidebarCollapsed", DOM.sidebar.classList.contains("collapsed"));
+  });
   DOM.newChatBtn.addEventListener("click", async () => {
     const session = await createSession();
     activeSessionId = session.id;
@@ -210,23 +153,19 @@ function initEventListeners() {
 
 function renderMessages(messages) {
   DOM.messagesList.innerHTML = "";
-  messages.forEach(msg => appendMessageToDOM(msg.role, msg.content, msg.performance));
+  messages.forEach(msg => appendMessageToDOM(msg.role, msg.content, msg.performance, msg.id));
   scrollToBottomSmart(true);
 }
 
-function appendMessageToDOM(role, content, performanceData = null) {
+function appendMessageToDOM(role, content, performanceData = null, messageId = null) {
   const item = document.createElement("div");
   item.className = `message-item ${role}`;
+  item.dataset.id = messageId;
+  
   const bubble = document.createElement("div");
   bubble.className = "message-bubble";
   if (content === "Thinking...") {
-    bubble.innerHTML = `
-      <div class="thinking-dots">
-        <span class="thinking-dot"></span>
-        <span class="thinking-dot"></span>
-        <span class="thinking-dot"></span>
-      </div>
-    `;
+    bubble.innerHTML = `<div class="thinking-dots"><span class="thinking-dot"></span><span class="thinking-dot"></span><span class="thinking-dot"></span></div>`;
   } else {
     bubble.innerHTML = parseMarkdown(content);
     if (window.Prism) Prism.highlightAllUnder(bubble);
@@ -235,6 +174,18 @@ function appendMessageToDOM(role, content, performanceData = null) {
     bubble.innerHTML += renderPerformanceBadge(performanceData);
   }
   item.appendChild(bubble);
+  
+  if (messageId && content !== "Thinking...") {
+    const actions = document.createElement("div");
+    actions.className = "message-actions";
+    if (role === "user") {
+      actions.innerHTML = `<button class="action-btn" onclick="editMessage(this, ${messageId})">✏️ Edit</button>`;
+    } else if (role === "assistant") {
+      actions.innerHTML = `<button class="action-btn" onclick="regenerateMessage(this, ${messageId})">🔄 Regenerate</button>`;
+    }
+    item.appendChild(actions);
+  }
+  
   DOM.messagesList.appendChild(item);
   return bubble;
 }
@@ -263,8 +214,8 @@ async function handleSend() {
     await loadSessions();
     showWelcomeState(false);
   }
-  await addMessage(activeSessionId, "user", content);
-  appendMessageToDOM("user", content);
+  const userMsg = await addMessage(activeSessionId, "user", content);
+  appendMessageToDOM("user", content, null, userMsg.id);
   scrollToBottomSmart(true);
   const aiBubble = appendMessageToDOM("assistant", "Thinking...");
   scrollToBottomSmart(true);

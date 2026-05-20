@@ -1,31 +1,18 @@
-// Application State
+// Application State & DOM Cache
 let activeSessionId = null;
 let currentProvider = "openai";
 let activeConfig = null;
+let activeAbortController = null;
 
-// DOM Elements cache
+const getEl = id => document.getElementById(id);
 const DOM = {
-  themeBtn: document.getElementById("theme-toggle-btn"),
-  settingsBtn: document.getElementById("settings-toggle-btn"),
-  sidebarToggleBtn: document.getElementById("sidebar-toggle-btn"),
-  sidebar: document.getElementById("sidebar"),
-  newChatBtn: document.getElementById("new-chat-btn"),
-  closeSettingsBtn: document.getElementById("close-settings-btn"),
-  settingsDrawer: document.getElementById("settings-drawer"),
-  providerTabs: document.querySelectorAll(".tab-btn"),
-  providerForm: document.getElementById("provider-form"),
-  baseUrlInput: document.getElementById("setting-base-url"),
-  apiKeyInput: document.getElementById("setting-api-key"),
-  modelInput: document.getElementById("setting-model"),
-  currentModelText: document.getElementById("current-provider-model"),
-  statusPill: document.getElementById("status-pill"),
-  statusText: document.getElementById("status-text"),
-  sessionsList: document.getElementById("sessions-list"),
-  chatViewport: document.getElementById("chat-viewport"),
-  welcomeView: document.getElementById("welcome-view"),
-  messagesList: document.getElementById("messages-list"),
-  chatInput: document.getElementById("chat-input"),
-  sendBtn: document.getElementById("send-btn")
+  themeBtn: getEl("theme-toggle-btn"), settingsBtn: getEl("settings-toggle-btn"), sidebarToggleBtn: getEl("sidebar-toggle-btn"), sidebar: getEl("sidebar"),
+  newChatBtn: getEl("new-chat-btn"), closeSettingsBtn: getEl("close-settings-btn"), settingsDrawer: getEl("settings-drawer"),
+  providerTabs: document.querySelectorAll(".tab-btn"), providerForm: getEl("provider-form"), baseUrlInput: getEl("setting-base-url"),
+  apiKeyInput: getEl("setting-api-key"), modelInput: getEl("setting-model"), currentModelText: getEl("current-provider-model"),
+  statusPill: getEl("status-pill"), statusText: getEl("status-text"), sessionsList: getEl("sessions-list"),
+  chatViewport: getEl("chat-viewport"), welcomeView: getEl("welcome-view"), messagesList: getEl("messages-list"),
+  chatInput: getEl("chat-input"), sendBtn: getEl("send-btn")
 };
 
 const DEFAULT_URLS = {
@@ -48,17 +35,16 @@ window.addEventListener("DOMContentLoaded", async () => {
   await loadSessions();
   await switchProviderTab(currentProvider);
   initEventListeners();
+  initTooltips();
   registerServiceWorker();
 });
 
 function initTheme() {
-  const savedTheme = localStorage.getItem("theme") || "light";
-  document.documentElement.setAttribute("data-theme", savedTheme);
+  document.documentElement.setAttribute("data-theme", localStorage.getItem("theme") || "light");
 }
 
 function toggleTheme() {
-  const current = document.documentElement.getAttribute("data-theme");
-  const next = current === "dark" ? "light" : "dark";
+  const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
   document.documentElement.setAttribute("data-theme", next);
   localStorage.setItem("theme", next);
 }
@@ -95,21 +81,14 @@ async function selectSession(sessionId) {
 }
 
 function showWelcomeState(show) {
-  if (show) {
-    DOM.welcomeView.style.display = "block";
-    DOM.messagesList.innerHTML = "";
-    activeSessionId = null;
-  } else {
-    DOM.welcomeView.style.display = "none";
-  }
+  DOM.welcomeView.style.display = show ? "block" : "none";
+  if (show) { DOM.messagesList.innerHTML = ""; activeSessionId = null; }
 }
 
 window.handleDeleteSession = async (sessionId) => {
   if (confirm("Are you sure you want to delete this session and all its message history?")) {
     await deleteSession(sessionId);
-    if (activeSessionId === sessionId) {
-      showWelcomeState(true);
-    }
+    if (activeSessionId === sessionId) showWelcomeState(true);
     await loadSessions();
   }
 };
@@ -162,6 +141,20 @@ DOM.providerForm.addEventListener("submit", async (e) => {
   DOM.settingsDrawer.classList.remove("open");
 });
 
+function setSendButtonState(isGenerating) {
+  if (isGenerating) {
+    DOM.sendBtn.disabled = false;
+    DOM.sendBtn.innerHTML = `<span class="icon-stop" style="color: #FF453A; font-size: 10px; font-weight: bold;">■</span>`;
+    DOM.sendBtn.style.backgroundColor = "rgba(255, 69, 58, 0.15)";
+    DOM.sendBtn.classList.add("generating");
+  } else {
+    DOM.sendBtn.disabled = DOM.chatInput.value.trim() === "";
+    DOM.sendBtn.innerHTML = `<span class="icon-arrow-up"></span>`;
+    DOM.sendBtn.style.backgroundColor = "";
+    DOM.sendBtn.classList.remove("generating");
+  }
+}
+
 function initEventListeners() {
   DOM.themeBtn.addEventListener("click", toggleTheme);
   DOM.settingsBtn.addEventListener("click", () => DOM.settingsDrawer.classList.add("open"));
@@ -182,25 +175,37 @@ function initEventListeners() {
   DOM.chatInput.addEventListener("input", () => {
     DOM.chatInput.style.height = "auto";
     DOM.chatInput.style.height = `${DOM.chatInput.scrollHeight}px`;
-    DOM.sendBtn.disabled = !activeConfig || DOM.chatInput.value.trim() === "";
+    if (!DOM.sendBtn.classList.contains("generating")) {
+      DOM.sendBtn.disabled = !activeConfig || DOM.chatInput.value.trim() === "";
+    }
   });
 
   DOM.chatInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      if (!DOM.sendBtn.classList.contains("generating")) handleSend();
     }
   });
 
-  DOM.sendBtn.addEventListener("click", handleSend);
-  document.getElementById("card-setup-keys").addEventListener("click", () => DOM.settingsDrawer.classList.add("open"));
-  document.getElementById("card-start-chat").addEventListener("click", () => DOM.newChatBtn.click());
+  DOM.sendBtn.addEventListener("click", () => {
+    if (DOM.sendBtn.classList.contains("generating")) {
+      if (activeAbortController) {
+        activeAbortController.abort();
+        activeAbortController = null;
+      }
+    } else {
+      handleSend();
+    }
+  });
+  
+  getEl("card-setup-keys").addEventListener("click", () => DOM.settingsDrawer.classList.add("open"));
+  getEl("card-start-chat").addEventListener("click", () => DOM.newChatBtn.click());
 }
 
 function renderMessages(messages) {
   DOM.messagesList.innerHTML = "";
   messages.forEach(msg => appendMessageToDOM(msg.role, msg.content, msg.performance));
-  scrollToBottom();
+  scrollToBottomSmart(true);
 }
 
 function appendMessageToDOM(role, content, performanceData = null) {
@@ -208,7 +213,19 @@ function appendMessageToDOM(role, content, performanceData = null) {
   item.className = `message-item ${role}`;
   const bubble = document.createElement("div");
   bubble.className = "message-bubble";
-  bubble.innerHTML = parseMarkdown(content);
+  
+  if (content === "Thinking...") {
+    bubble.innerHTML = `
+      <div class="thinking-dots">
+        <span class="thinking-dot"></span>
+        <span class="thinking-dot"></span>
+        <span class="thinking-dot"></span>
+      </div>
+    `;
+  } else {
+    bubble.innerHTML = parseMarkdown(content);
+  }
+  
   if (role === "assistant" && performanceData) {
     bubble.innerHTML += renderPerformanceBadge(performanceData);
   }
@@ -217,8 +234,15 @@ function appendMessageToDOM(role, content, performanceData = null) {
   return bubble;
 }
 
-function scrollToBottom() {
-  DOM.chatViewport.scrollTop = DOM.chatViewport.scrollHeight;
+function shouldScroll() {
+  const distanceToBottom = DOM.chatViewport.scrollHeight - DOM.chatViewport.scrollTop - DOM.chatViewport.clientHeight;
+  return distanceToBottom <= 80;
+}
+
+function scrollToBottomSmart(force = false) {
+  if (force || shouldScroll()) {
+    DOM.chatViewport.scrollTop = DOM.chatViewport.scrollHeight;
+  }
 }
 
 async function handleSend() {
@@ -227,7 +251,8 @@ async function handleSend() {
 
   DOM.chatInput.value = "";
   DOM.chatInput.style.height = "auto";
-  DOM.sendBtn.disabled = true;
+  activeAbortController = new AbortController();
+  setSendButtonState(true);
 
   if (!activeSessionId) {
     const session = await createSession(content.slice(0, 20) + (content.length > 20 ? "..." : ""));
@@ -238,90 +263,76 @@ async function handleSend() {
 
   await addMessage(activeSessionId, "user", content);
   appendMessageToDOM("user", content);
-  scrollToBottom();
+  scrollToBottomSmart(true);
 
   const aiBubble = appendMessageToDOM("assistant", "Thinking...");
-  scrollToBottom();
+  scrollToBottomSmart(true);
 
   const dot = DOM.statusPill.querySelector(".status-dot");
   dot.className = "status-dot yellow";
   DOM.statusText.textContent = "Generating...";
 
-  const streamStartTime = performance.now();
-  let firstTokenReceived = false;
-  let ttft = 0;
-
   try {
     const messages = await getMessages(activeSessionId);
-    const apiPayload = {
-      model: activeConfig.model,
-      messages: messages.map(m => ({ role: m.role, content: m.content })),
-      stream: true
-    };
-
-    const response = await fetch(`${activeConfig.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${deobfuscate(activeConfig.apiKey)}`
-      },
-      body: JSON.stringify(apiPayload)
-    });
-
-    if (!response.ok) {
-      throw new Error(`API Error (${response.status}): ${await response.text()}`);
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder("utf-8");
-    let aiResponse = "";
-    aiBubble.innerHTML = "";
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split("\n");
-      
-      for (const line of lines) {
-        const cleaned = line.trim();
-        if (cleaned === "data: [DONE]") continue;
-        if (cleaned.startsWith("data: ")) {
-          try {
-            const parsed = JSON.parse(cleaned.slice(6));
-            const delta = parsed.choices?.[0]?.delta?.content || "";
-            if (!firstTokenReceived && delta.trim().length > 0) {
-              firstTokenReceived = true;
-              ttft = performance.now() - streamStartTime;
-            }
-            aiResponse += delta;
-            aiBubble.innerHTML = parseMarkdown(aiResponse);
-            scrollToBottom();
-          } catch (err) {}
-        }
-      }
-    }
-
-    const streamEndTime = performance.now();
-    const e2e = streamEndTime - streamStartTime;
-    const tokenCount = Math.max(1, aiResponse.length / 3.2);
-    const decodeDuration = (e2e - ttft) / 1000;
-    const tps = decodeDuration > 0 ? (tokenCount / decodeDuration) : 0;
-    const itl = tokenCount > 0 ? ((e2e - ttft) / tokenCount) : 0;
-    const perfData = { ttft, tps, itl, tokenCount, e2e };
+    const perfData = await streamChatCompletion(activeConfig, messages, ({ fullText }) => {
+      aiBubble.innerHTML = parseMarkdown(fullText);
+      scrollToBottomSmart();
+    }, activeAbortController.signal);
 
     aiBubble.innerHTML += renderPerformanceBadge(perfData);
-    scrollToBottom();
+    scrollToBottomSmart();
 
-    await addMessage(activeSessionId, "assistant", aiResponse, perfData);
+    await addMessage(activeSessionId, "assistant", perfData.fullText, perfData);
     await loadSessions();
   } catch (err) {
-    console.error("Direct API Streaming failed: ", err);
-    aiBubble.innerHTML = `<span style="color: #FF453A;">Error: Unable to fetch response. Please verify your API Key, Base URL, and connection.</span><br><small>${escapeHTML(err.message)}</small>`;
+    if (err.name === "AbortError") {
+      aiBubble.innerHTML += `<br><span style="color: #FF9500; font-size: 11px;">⚠️ Stream connection aborted by user.</span>`;
+      scrollToBottomSmart(true);
+    } else {
+      console.error("Direct API Streaming failed: ", err);
+      aiBubble.innerHTML = `<span style="color: #FF453A;">Error: Unable to fetch response. Please verify your API Key, Base URL, and connection.</span><br><small>${escapeHTML(err.message)}</small>`;
+    }
   } finally {
+    activeAbortController = null;
+    setSendButtonState(false);
     updateStatus(true);
   }
+}
+
+function initTooltips() {
+  const tooltipEl = document.createElement("div");
+  tooltipEl.id = "global-tooltip";
+  tooltipEl.className = "custom-tooltip";
+  document.body.appendChild(tooltipEl);
+
+  document.body.addEventListener("mouseover", (e) => {
+    const target = e.target.closest("[data-tooltip]");
+    if (target) {
+      tooltipEl.textContent = target.getAttribute("data-tooltip");
+      tooltipEl.style.display = "block";
+      setTimeout(() => tooltipEl.classList.add("visible"), 10);
+    }
+  });
+
+  document.body.addEventListener("mousemove", (e) => {
+    if (tooltipEl.style.display === "block") {
+      const offsetX = 12, offsetY = 12;
+      let left = e.pageX + offsetX, top = e.pageY + offsetY;
+      const tooltipRect = tooltipEl.getBoundingClientRect();
+      if (left + tooltipRect.width > window.innerWidth) left = e.pageX - tooltipRect.width - offsetX;
+      if (top + tooltipRect.height > window.innerHeight) top = e.pageY - tooltipRect.height - offsetY;
+      tooltipEl.style.left = `${left}px`;
+      tooltipEl.style.top = `${top}px`;
+    }
+  });
+
+  document.body.addEventListener("mouseout", (e) => {
+    const target = e.target.closest("[data-tooltip]");
+    if (target) {
+      tooltipEl.classList.remove("visible");
+      tooltipEl.style.display = "none";
+    }
+  });
 }
 
 function registerServiceWorker() {

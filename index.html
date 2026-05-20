@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Cosmic Pixel - Apple Style AI Chatbox</title>
+  <title>Cosmic Pixel - Secure AI Chatbox</title>
   
-  <!-- PWA & Apple Standalone Meta Tags -->
+  <!-- PWA & Mobile Standalone Meta Tags -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#007AFF" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0A84FF" media="(prefers-color-scheme: dark)">
@@ -15,6 +15,7 @@
   <link rel="apple-touch-icon" href="icon.svg">
   
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="widgets.css">
 </head>
 <body>
   <div class="app-container">
@@ -69,7 +70,7 @@
       <section id="chat-viewport" class="chat-viewport">
         <!-- Default Welcome State -->
         <div id="welcome-view" class="welcome-view">
-          <div class="welcome-logo"></div>
+          <div class="welcome-logo">⚡</div>
           <h1>Welcome to Secure AI Chat</h1>
           <p>All credentials are obfuscated and stored locally. Streams connect directly to providers with zero log retention.</p>
           <div class="welcome-cards">
@@ -147,6 +148,7 @@
   <!-- Scripts -->
   <script src="crypto.js"></script>
   <script src="db.js"></script>
+  <script src="api.js"></script>
   <script src="renderer.js"></script>
   <script src="app.js"></script>
 </body>

@@ -1,4 +1,4 @@
-const CRYPTO_KEY = "CosmicPixelSecureAppleByokXorKey";
+const CRYPTO_KEY = "CosmicPixelSecureUniversalByokXorKey";
 
 /**
  * Obfuscates plain text API keys with a lightweight XOR cipher and Base64.

@@ -1,5 +1,6 @@
 # Rules
 
+- Implement Deep Reasoning and Deep thinking.
 - Reply me mandarin.
 - Reply start with Current Goal(CG).
 - Reply end with Next Suggestion Option(NSO): 1,2,3...(1 must be best option)

@@ -1,32 +1,32 @@
-/* CSS Variables for Apple Themes */
+/* CSS Variables for Apple-Inspired Themes using modern OKLCH color spaces */
 :root[data-theme="light"] {
-  --bg-gradient: linear-gradient(135deg, #F5F5F7 0%, #E8EBF2 100%);
-  --sidebar-bg: rgba(245, 245, 247, 0.65);
-  --chat-bg: #FFFFFF;
-  --glass-border: rgba(0, 0, 0, 0.08);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.04);
-  --text-primary: #1D1D1F;
-  --text-secondary: #86868B;
-  --accent-color: #007AFF;
-  --message-user-bg: #007AFF;
-  --message-user-text: #FFFFFF;
-  --message-ai-bg: #F5F5F7;
-  --border-subtle: rgba(0, 0, 0, 0.06);
+  --bg-gradient: linear-gradient(135deg, oklch(97% 0.005 286) 0%, oklch(93% 0.015 250) 100%);
+  --sidebar-bg: oklch(97% 0.005 286 / 65%);
+  --chat-bg: oklch(100% 0 0);
+  --glass-border: oklch(0% 0 0 / 8%);
+  --glass-shadow: 0 8px 32px 0 oklch(0% 0 0 / 4%);
+  --text-primary: oklch(18% 0.005 286);
+  --text-secondary: oklch(60% 0.005 286);
+  --accent-color: oklch(60% 0.23 250);
+  --message-user-bg: oklch(60% 0.23 250);
+  --message-user-text: oklch(100% 0 0);
+  --message-ai-bg: oklch(97% 0.005 286);
+  --border-subtle: oklch(0% 0 0 / 6%);
 }
 
 :root[data-theme="dark"] {
-  --bg-gradient: linear-gradient(135deg, #000000 0%, #151515 100%);
-  --sidebar-bg: rgba(28, 28, 30, 0.65);
-  --chat-bg: #1C1C1E;
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  --text-primary: #F5F5F7;
-  --text-secondary: #86868B;
-  --accent-color: #0A84FF;
-  --message-user-bg: #0A84FF;
-  --message-user-text: #FFFFFF;
-  --message-ai-bg: #2C2C2E;
-  --border-subtle: rgba(255, 255, 255, 0.06);
+  --bg-gradient: linear-gradient(135deg, oklch(0% 0 0) 0%, oklch(15% 0 0) 100%);
+  --sidebar-bg: oklch(20% 0.005 286 / 65%);
+  --chat-bg: oklch(18% 0.005 286);
+  --glass-border: oklch(100% 0 0 / 8%);
+  --glass-shadow: 0 8px 32px 0 oklch(0% 0 0 / 30%);
+  --text-primary: oklch(97% 0.005 286);
+  --text-secondary: oklch(60% 0.005 286);
+  --accent-color: oklch(62% 0.23 250);
+  --message-user-bg: oklch(62% 0.23 250);
+  --message-user-text: oklch(100% 0 0);
+  --message-ai-bg: oklch(28% 0.005 286);
+  --border-subtle: oklch(100% 0 0 / 6%);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }

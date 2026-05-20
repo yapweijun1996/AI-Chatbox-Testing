@@ -117,11 +117,11 @@ function renderPerformanceBadge(perf) {
   
   return `
     <div class="message-meta">
-      <span data-tooltip="⏱️ [连接延迟] 从发送请求到建立连接并返回第一个字节的时间。数值越低表示网络响应越快。">⏱️ Connection: ${fblStr}</span>
-      <span data-tooltip="⚡ [首字延迟] 大模型输出第一个字符的时间。体现模型的启动与思考速度。">⏳ TTFT: ${ttftStr}</span>
-      <span data-tooltip="🚀 [生成速度] 大模型平均每秒吐出的字符单元 (Token) 数量。代表推理运行速度。">🏃 Speed: ${tpsStr} tps</span>
-      <span data-tooltip="⏳ [字间延迟] 平均每两个字符输出之间的微秒间隔。数值越低阅读感越流畅。">💎 ITL: ${itlStr}</span>
-      <span data-tooltip="⏱️ [端到端总时] 本次对话从点击发送到完全返回并接收完毕的总用时。">⏱️ Total: ${e2eStr}</span>
+      <span data-tooltip="⏱️ [Connection Latency] The time elapsed from sending the request to establishing the connection and receiving the first byte. Lower means faster network response.">⏱️ Connection: ${fblStr}</span>
+      <span data-tooltip="⏳ [Time to First Token] The duration from initiating the request until the model generates its first character token. Measures model prefill and thinking time.">⏳ TTFT: ${ttftStr}</span>
+      <span data-tooltip="🏃 [Generation Speed] The average number of token units generated per second. Measures raw model inference and decoding throughput.">🏃 Speed: ${tpsStr} tps</span>
+      <span data-tooltip="💎 [Inter-Token Latency] The average duration between generating consecutive tokens. Lower values indicate a smoother and more fluid reading pace.">💎 ITL: ${itlStr}</span>
+      <span data-tooltip="⏱️ [End-to-End Duration] The total round-trip time from clicking send until the stream is completely closed.">⏱️ Total: ${e2eStr}</span>
     </div>
   `;
 }

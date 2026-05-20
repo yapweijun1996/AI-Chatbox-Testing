@@ -1,6 +1,7 @@
 // Application State & DOM Cache
 let activeSessionId = null;
-let currentProvider = "openai";
+let currentProvider = localStorage.getItem("lastProvider") || "openai";
+let currentLocale = localStorage.getItem("lastLocale") || (navigator.language.startsWith("zh") ? "zh" : "en");
 let activeConfig = null;
 let activeAbortController = null;
 
@@ -34,6 +35,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   initTheme();
   await loadSessions();
   await switchProviderTab(currentProvider);
+  applyLanguage(currentLocale);
+  getEl("setting-locale").value = currentLocale;
   initEventListeners();
   initTooltips();
   registerServiceWorker();
@@ -95,6 +98,7 @@ window.handleDeleteSession = async (sessionId) => {
 
 async function switchProviderTab(provider) {
   currentProvider = provider;
+  localStorage.setItem("lastProvider", provider);
   DOM.providerTabs.forEach(t => t.classList.toggle("active", t.dataset.provider === provider));
   
   const savedConfig = await getSetting(provider);
@@ -114,16 +118,17 @@ async function switchProviderTab(provider) {
   DOM.currentModelText.textContent = `${provider.toUpperCase()} / ${DOM.modelInput.value || "Not Configured"}`;
 }
 
+function getLocaleString(key) {
+  const locale = localStorage.getItem("lastLocale") || (navigator.language.startsWith("zh") ? "zh" : "en");
+  return (TRANSLATIONS[locale] || TRANSLATIONS.en)[key];
+}
+
 function updateStatus(connected) {
   const dot = DOM.statusPill.querySelector(".status-dot");
-  if (connected) {
-    dot.className = "status-dot green";
-    DOM.statusText.textContent = "Connected (BYOK)";
-    DOM.sendBtn.disabled = DOM.chatInput.value.trim() === "";
-  } else {
-    dot.className = "status-dot yellow";
-    DOM.statusText.textContent = "Missing Secret Key";
-    DOM.sendBtn.disabled = true;
+  dot.className = connected ? "status-dot green" : "status-dot yellow";
+  DOM.statusText.textContent = getLocaleString(connected ? "headerConnected" : "headerMissingKey");
+  if (!DOM.sendBtn.classList.contains("generating")) {
+    DOM.sendBtn.disabled = !connected || DOM.chatInput.value.trim() === "";
   }
 }
 
@@ -136,6 +141,11 @@ DOM.providerForm.addEventListener("submit", async (e) => {
   };
   await saveSetting(currentProvider, config);
   activeConfig = config;
+  
+  const newLocale = getEl("setting-locale").value;
+  localStorage.setItem("lastLocale", newLocale);
+  applyLanguage(newLocale);
+  
   updateStatus(true);
   DOM.currentModelText.textContent = `${currentProvider.toUpperCase()} / ${config.model}`;
   DOM.settingsDrawer.classList.remove("open");
@@ -271,7 +281,7 @@ async function handleSend() {
 
   const dot = DOM.statusPill.querySelector(".status-dot");
   dot.className = "status-dot yellow";
-  DOM.statusText.textContent = "Generating...";
+  DOM.statusText.textContent = getLocaleString("headerGenerating");
 
   try {
     const messages = await getMessages(activeSessionId);

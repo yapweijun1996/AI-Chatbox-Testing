@@ -14,6 +14,10 @@ async function streamChatCompletion(config, messages, onChunk, signal) {
     stream: true
   };
 
+  if (config.reasoningEffort && config.reasoningEffort !== "none") {
+    apiPayload.reasoning_effort = config.reasoningEffort;
+  }
+
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
     method: "POST",
     headers: {

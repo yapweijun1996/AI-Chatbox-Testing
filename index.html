@@ -136,6 +136,16 @@
               <input type="text" id="setting-model" placeholder="gpt-4o-mini" autocomplete="off" required>
             </div>
 
+            <div class="form-group" id="group-reasoning-effort">
+              <label for="setting-reasoning-effort" data-i18n="formReasoningEffort">Reasoning Effort (o-series)</label>
+              <select id="setting-reasoning-effort" style="background: var(--message-ai-bg); border: 1px solid var(--glass-border); border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--text-primary); outline: none;">
+                <option value="none">None (Standard / Disable)</option>
+                <option value="low">Low (低度思维)</option>
+                <option value="medium">Medium (中度思维)</option>
+                <option value="high">High (高度思维)</option>
+              </select>
+            </div>
+
             <div class="form-group">
               <label for="setting-locale" data-i18n="formLanguage">UI Language (界面语言)</label>
               <select id="setting-locale" style="background: var(--message-ai-bg); border: 1px solid var(--glass-border); border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--text-primary); outline: none;">
@@ -162,7 +172,8 @@
 
   <!-- Scripts -->
   <script src="crypto.js"></script>
-  <script src="db.js"></script>
+  <script src="db-init.js"></script>
+  <script src="db-operations.js"></script>
   <script src="vendor/prism.js"></script>
   <script src="locales.js"></script>
   <script src="api.js"></script>

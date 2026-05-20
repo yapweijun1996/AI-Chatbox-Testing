@@ -1,14 +1,12 @@
 // Application State & DOM Cache
-let activeSessionId = null;
-let currentProvider = localStorage.getItem("lastProvider") || "openai";
+let activeSessionId = null, currentProvider = localStorage.getItem("lastProvider") || "openai";
 const supportedLocales = ["en", "zh", "ms", "ja", "vi"];
 const getSystemLocale = () => {
   const sysLang = navigator.language.slice(0, 2);
   return supportedLocales.includes(sysLang) ? sysLang : "en";
 };
 let currentLocale = localStorage.getItem("lastLocale") || getSystemLocale();
-let activeConfig = null;
-let activeAbortController = null;
+let activeConfig = null, activeAbortController = null;
 
 const getEl = id => document.getElementById(id);
 const DOM = {
@@ -18,7 +16,8 @@ const DOM = {
   apiKeyInput: getEl("setting-api-key"), modelInput: getEl("setting-model"), currentModelText: getEl("current-provider-model"),
   statusPill: getEl("status-pill"), statusText: getEl("status-text"), sessionsList: getEl("sessions-list"),
   chatViewport: getEl("chat-viewport"), welcomeView: getEl("welcome-view"), messagesList: getEl("messages-list"),
-  chatInput: getEl("chat-input"), sendBtn: getEl("send-btn")
+  chatInput: getEl("chat-input"), sendBtn: getEl("send-btn"),
+  reasoningEffort: getEl("setting-reasoning-effort"), reasoningGroup: getEl("group-reasoning-effort")
 };
 
 const DEFAULT_URLS = { openai: "https://api.openai.com/v1", gemini: "https://generativelanguage.googleapis.com/v1beta/openai", anthropic: "https://api.anthropic.com/v1", lmstudio: "http://localhost:1234/v1" };
@@ -109,17 +108,22 @@ async function switchProviderTab(provider) {
   currentProvider = provider;
   localStorage.setItem("lastProvider", provider);
   DOM.providerTabs.forEach(t => t.classList.toggle("active", t.dataset.provider === provider));
+  
+  DOM.reasoningGroup.style.display = provider === "openai" ? "flex" : "none";
+
   const savedConfig = await getSetting(provider);
   activeConfig = savedConfig;
   if (savedConfig) {
     DOM.baseUrlInput.value = savedConfig.baseUrl;
     DOM.apiKeyInput.value = deobfuscate(savedConfig.apiKey);
     DOM.modelInput.value = savedConfig.model;
+    if (provider === "openai") DOM.reasoningEffort.value = savedConfig.reasoningEffort || "none";
     updateStatus(true);
   } else {
     DOM.baseUrlInput.value = DEFAULT_URLS[provider] || "";
     DOM.apiKeyInput.value = "";
     DOM.modelInput.value = DEFAULT_MODELS[provider] || "";
+    if (provider === "openai") DOM.reasoningEffort.value = "none";
     updateStatus(false);
   }
   DOM.currentModelText.textContent = `${provider.toUpperCase()} / ${DOM.modelInput.value || "Not Configured"}`;
@@ -147,6 +151,9 @@ async function refreshTabIndicators() {
 DOM.providerForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const config = { baseUrl: DOM.baseUrlInput.value.trim(), apiKey: obfuscate(DOM.apiKeyInput.value.trim()), model: DOM.modelInput.value.trim() };
+  if (currentProvider === "openai") {
+    config.reasoningEffort = DOM.reasoningEffort.value;
+  }
   await saveSetting(currentProvider, config);
   activeConfig = config;
   const newLocale = getEl("setting-locale").value;

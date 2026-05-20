@@ -1,11 +1,12 @@
-const CACHE_NAME = "cosmic-chat-v4";
+const CACHE_NAME = "cosmic-chat-v5";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./widgets.css",
   "./vendor/prism.css",
-  "./db.js",
+  "./db-init.js",
+  "./db-operations.js",
   "./crypto.js",
   "./vendor/prism.js",
   "./vendor/marked.js",

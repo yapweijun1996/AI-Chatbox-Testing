@@ -18,6 +18,7 @@ const TRANSLATIONS = {
     formApiKey: "API Key (API Secret Key)",
     formModel: "Default Model Name",
     formLanguage: "UI Language (界面语言)",
+    formReasoningEffort: "Reasoning Effort (o-series)",
     formSave: "Save Settings",
     privacyWarning: "🔒 XOR Obfuscated & Encrypted. Locally Persisted via IndexedDB."
   },
@@ -40,6 +41,7 @@ const TRANSLATIONS = {
     formApiKey: "接口 API 密钥 Secret Key",
     formModel: "默认模型名称 (Model)",
     formLanguage: "UI Language (界面语言)",
+    formReasoningEffort: "推理开销 (o系列模型)",
     formSave: "保存当前配置",
     privacyWarning: "🔒 XOR 混淆与加密保护。本地通过 IndexedDB 安全存储。"
   },
@@ -62,6 +64,7 @@ const TRANSLATIONS = {
     formApiKey: "API Key (API Secret Key)",
     formModel: "Nama Model Lalai",
     formLanguage: "Bahasa UI (UI Language)",
+    formReasoningEffort: "Usaha Penaakulan (o-series)",
     formSave: "Simpan Tetapan",
     privacyWarning: "🔒 XOR Dikaburkan & Disulitkan. Disimpan secara tempatan melalui IndexedDB."
   },
@@ -84,6 +87,7 @@ const TRANSLATIONS = {
     formApiKey: "APIキー (API Secret Key)",
     formModel: "デフォルトモデル名",
     formLanguage: "UI言語 (UI Language)",
+    formReasoningEffort: "推論の労力 (oシリーズ)",
     formSave: "設定を保存",
     privacyWarning: "🔒 XOR難読化＆暗号化。IndexedDBを介してローカルに保存されます。"
   },
@@ -106,6 +110,7 @@ const TRANSLATIONS = {
     formApiKey: "Khóa API (API Secret Key)",
     formModel: "Tên mô hình mặc định",
     formLanguage: "Ngôn ngữ giao diện (UI Language)",
+    formReasoningEffort: "Nỗ lực tư duy (dòng o)",
     formSave: "Lưu cài đặt",
     privacyWarning: "🔒 XOR Mã hóa & Ẩn danh. Lưu trữ cục bộ qua IndexedDB."
   }

@@ -7,6 +7,8 @@ let activeConfig = null;
 const DOM = {
   themeBtn: document.getElementById("theme-toggle-btn"),
   settingsBtn: document.getElementById("settings-toggle-btn"),
+  sidebarToggleBtn: document.getElementById("sidebar-toggle-btn"),
+  sidebar: document.getElementById("sidebar"),
   newChatBtn: document.getElementById("new-chat-btn"),
   closeSettingsBtn: document.getElementById("close-settings-btn"),
   settingsDrawer: document.getElementById("settings-drawer"),
@@ -164,6 +166,7 @@ function initEventListeners() {
   DOM.themeBtn.addEventListener("click", toggleTheme);
   DOM.settingsBtn.addEventListener("click", () => DOM.settingsDrawer.classList.add("open"));
   DOM.closeSettingsBtn.addEventListener("click", () => DOM.settingsDrawer.classList.remove("open"));
+  DOM.sidebarToggleBtn.addEventListener("click", () => DOM.sidebar.classList.toggle("collapsed"));
   
   DOM.newChatBtn.addEventListener("click", async () => {
     const session = await createSession();

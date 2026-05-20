@@ -19,7 +19,7 @@
 <body>
   <div class="app-container">
     <!-- Sidebar -->
-    <aside class="sidebar">
+    <aside id="sidebar" class="sidebar">
       <div class="sidebar-header">
         <button id="new-chat-btn" class="btn btn-primary new-chat-btn">
           <span class="icon-plus"></span>
@@ -49,6 +49,9 @@
       <!-- Status Pill & Header -->
       <header class="chat-header">
         <div class="header-left">
+          <button id="sidebar-toggle-btn" class="icon-btn" title="Toggle Sidebar">
+            <span class="icon-sidebar"></span>
+          </button>
           <div class="status-pill" id="status-pill">
             <span class="status-dot green"></span>
             <span id="status-text">Connected (BYOK)</span>
@@ -96,9 +99,9 @@
       </footer>
     </main>
 
-    <!-- Settings Overlay / Drawer -->
-    <div id="settings-drawer" class="settings-drawer-overlay">
-      <div class="settings-drawer-content">
+    <!-- Settings Overlay / Centered Modal -->
+    <div id="settings-drawer" class="settings-modal-overlay">
+      <div class="settings-modal-content">
         <div class="drawer-header">
           <h2>Keys & Provider Config (BYOK)</h2>
           <button id="close-settings-btn" class="icon-btn-close">&times;</button>

@@ -1,7 +1,12 @@
 // Application State & DOM Cache
 let activeSessionId = null;
 let currentProvider = localStorage.getItem("lastProvider") || "openai";
-let currentLocale = localStorage.getItem("lastLocale") || (navigator.language.startsWith("zh") ? "zh" : "en");
+const supportedLocales = ["en", "zh", "ms", "ja", "vi"];
+const getSystemLocale = () => {
+  const sysLang = navigator.language.slice(0, 2);
+  return supportedLocales.includes(sysLang) ? sysLang : "en";
+};
+let currentLocale = localStorage.getItem("lastLocale") || getSystemLocale();
 let activeConfig = null;
 let activeAbortController = null;
 
@@ -119,7 +124,7 @@ async function switchProviderTab(provider) {
 }
 
 function getLocaleString(key) {
-  const locale = localStorage.getItem("lastLocale") || (navigator.language.startsWith("zh") ? "zh" : "en");
+  const locale = localStorage.getItem("lastLocale") || getSystemLocale();
   return (TRANSLATIONS[locale] || TRANSLATIONS.en)[key];
 }
 

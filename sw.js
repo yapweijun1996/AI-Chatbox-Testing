@@ -1,4 +1,4 @@
-const CACHE_NAME = "cosmic-chat-v5";
+const CACHE_NAME = "cosmic-chat-v6";
 const ASSETS = [
   "./",
   "./index.html",

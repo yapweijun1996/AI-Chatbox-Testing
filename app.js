@@ -1,12 +1,14 @@
 // Application State & DOM Cache
-let activeSessionId = null, currentProvider = localStorage.getItem("lastProvider") || "openai";
+let activeSessionId = null;
+let currentProvider = localStorage.getItem("lastProvider") || "openai";
 const supportedLocales = ["en", "zh", "ms", "ja", "vi"];
 const getSystemLocale = () => {
   const sysLang = navigator.language.slice(0, 2);
   return supportedLocales.includes(sysLang) ? sysLang : "en";
 };
 let currentLocale = localStorage.getItem("lastLocale") || getSystemLocale();
-let activeConfig = null, activeAbortController = null;
+let activeConfig = null;
+let activeAbortController = null;
 
 const getEl = id => document.getElementById(id);
 const DOM = {
@@ -275,6 +277,7 @@ async function handleSend() {
       aiBubble.innerHTML = parseMarkdown(fullText);
       scrollToBottomSmart();
     }, activeAbortController.signal);
+    perfData.model = activeConfig.model;
     aiBubble.innerHTML += renderPerformanceBadge(perfData);
     if (window.Prism) Prism.highlightAllUnder(aiBubble);
     scrollToBottomSmart();

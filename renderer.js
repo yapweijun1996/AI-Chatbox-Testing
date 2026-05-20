@@ -13,140 +13,41 @@ function escapeHTML(str) {
   }[m]));
 }
 
+// Set up custom Marked.js renderer for our specialized components
+if (window.marked) {
+  const renderer = {
+    code({ text, lang }) {
+      const languageClass = `language-${lang || 'plaintext'}`;
+      return `
+        <pre class="${languageClass}">
+          <div class="code-block-header">
+            <span>${lang || "code"}</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <code class="${languageClass}">${text.trim()}</code>
+        </pre>
+      `;
+    },
+    link({ href, title, text }) {
+      return `<a href="${href}" target="_blank" class="chat-link"${title ? ` title="${title}"` : ""}>${text}</a>`;
+    }
+  };
+  marked.use({ renderer, gfm: true, breaks: true });
+}
+
 function parseMarkdown(text) {
   if (!text) return "";
   
   // 1. Escaping first to prevent DOM XSS
   let escaped = escapeHTML(text);
   
-  // 2. Multi-line code block: ```lang\ncode\n```
-  const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g;
-  escaped = escaped.replace(codeBlockRegex, (match, lang, code) => {
-    const languageClass = `language-${lang || 'plaintext'}`;
-    return `
-      <pre class="${languageClass}">
-        <div class="code-block-header">
-          <span>${lang || "code"}</span>
-          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-        </div>
-        <code class="${languageClass}">${code.trim()}</code>
-      </pre>
-    `;
-  });
-
-  // 3. Inline code: `code`
-  escaped = escaped.replace(/`([^`]+)`/g, (_, code) => `<code>${code}</code>`);
-
-  // 4. Split into lines for block-level parsing
-  const lines = escaped.split("\n");
-  let inList = false;
-  let inTable = false;
-  let html = [];
-
-  for (let line of lines) {
-    let trimmed = line.trim();
-
-    // Skip if line is inside pre-rendered block
-    if (trimmed.startsWith("<pre") || trimmed.startsWith("<div") || trimmed.startsWith("</pre") || trimmed.startsWith("<code") || trimmed.startsWith("</code")) {
-      if (inList) { html.push(inList === "ol" ? "</ol>" : "</ul>"); inList = false; }
-      if (inTable) { html.push("</tbody></table></div>"); inTable = false; }
-      html.push(line);
-      continue;
-    }
-
-    // Markdown Table parsing: | Header | Header |
-    if (trimmed.startsWith("|") && trimmed.endsWith("|")) {
-      if (inList) { html.push(inList === "ol" ? "</ol>" : "</ul>"); inList = false; }
-      const cells = trimmed.split("|").slice(1, -1).map(c => c.trim());
-      const isDivider = cells.every(c => /^:?-+:?$/.test(c));
-      if (isDivider) continue; // Skip divider row, browser handles layout
-      
-      if (!inTable) {
-        html.push("<div class='table-responsive'><table><thead>");
-        html.push("<tr>" + cells.map(c => `<th>${parseInline(c)}</th>`).join("") + "</tr>");
-        html.push("</thead><tbody>");
-        inTable = true;
-      } else {
-        html.push("<tr>" + cells.map(c => `<td>${parseInline(c)}</td>`).join("") + "</tr>");
-      }
-      continue;
-    }
-
-    // Close Table if line is not a table row
-    if (inTable && (!trimmed.startsWith("|") || !trimmed.endsWith("|"))) {
-      html.push("</tbody></table></div>");
-      inTable = false;
-    }
-
-    // Blockquote: > text
-    if (trimmed.startsWith("&gt; ")) {
-      if (inList) { html.push(inList === "ol" ? "</ol>" : "</ul>"); inList = false; }
-      html.push(`<blockquote>${parseInline(trimmed.slice(5))}</blockquote>`);
-      continue;
-    }
-
-    // Unordered List: - text or * text
-    if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
-      if (inList !== "ul") {
-        if (inList) html.push("</ol>");
-        html.push("<ul>");
-        inList = "ul";
-      }
-      html.push(`<li>${parseInline(trimmed.slice(2))}</li>`);
-      continue;
-    }
-
-    // Ordered List: 1. text
-    let olMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
-    if (olMatch) {
-      if (inList !== "ol") {
-        if (inList) html.push("</ul>");
-        html.push("<ol>");
-        inList = "ol";
-      }
-      html.push(`<li>${parseInline(olMatch[2])}</li>`);
-      continue;
-    }
-
-    // If list ends
-    if (inList && !trimmed.startsWith("- ") && !trimmed.startsWith("* ") && !trimmed.match(/^\d+\.\s+/) && trimmed !== "") {
-      html.push(inList === "ol" ? "</ol>" : "</ul>");
-      inList = false;
-    }
-
-    // Headings: # h1, ## h2, ### h3, #### h4, ##### h5, ###### h6
-    let headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
-    if (headingMatch) {
-      let level = headingMatch[1].length;
-      html.push(`<h${level}>${parseInline(headingMatch[2])}</h${level}>`);
-      continue;
-    }
-
-    // Empty line
-    if (trimmed === "") {
-      html.push("<br>");
-      continue;
-    }
-
-    // Normal paragraph line
-    html.push(`<p>${parseInline(line)}</p>`);
+  // 2. Marked.js parsing
+  if (window.marked) {
+    return marked.parse(escaped);
   }
-
-  if (inList) html.push(inList === "ol" ? "</ol>" : "</ul>");
-  if (inTable) html.push("</tbody></table></div>");
-
-  return html.join("");
-}
-
-function parseInline(text) {
-  let res = text;
-  // Bold: **text**
-  res = res.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-  // Italic: *text*
-  res = res.replace(/\*([^*]+)\*/g, "<em>$1</em>");
-  // Links: [text](url)
-  res = res.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="chat-link">$1</a>');
-  return res;
+  
+  // Simple fallback if marked failed to load
+  return `<p>${escaped.replace(/\n/g, "<br>")}</p>`;
 }
 
 function renderPerformanceBadge(perf) {

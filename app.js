@@ -21,19 +21,8 @@ const DOM = {
   chatInput: getEl("chat-input"), sendBtn: getEl("send-btn")
 };
 
-const DEFAULT_URLS = {
-  openai: "https://api.openai.com/v1",
-  gemini: "https://generativelanguage.googleapis.com/v1beta/openai",
-  anthropic: "https://api.anthropic.com/v1",
-  lmstudio: "http://localhost:1234/v1"
-};
-
-const DEFAULT_MODELS = {
-  openai: "gpt-4o-mini",
-  gemini: "gemini-1.5-flash",
-  anthropic: "claude-3-5-sonnet-20241022",
-  lmstudio: "meta-llama-3-8b-instruct"
-};
+const DEFAULT_URLS = { openai: "https://api.openai.com/v1", gemini: "https://generativelanguage.googleapis.com/v1beta/openai", anthropic: "https://api.anthropic.com/v1", lmstudio: "http://localhost:1234/v1" };
+const DEFAULT_MODELS = { openai: "gpt-4o-mini", gemini: "gemini-1.5-flash", anthropic: "claude-3-5-sonnet-20241022", lmstudio: "meta-llama-3-8b-instruct" };
 
 window.addEventListener("DOMContentLoaded", async () => {
   await initDB();

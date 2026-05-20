@@ -1,4 +1,4 @@
-const CACHE_NAME = "cosmic-chat-v3";
+const CACHE_NAME = "cosmic-chat-v4";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ const ASSETS = [
   "./db.js",
   "./crypto.js",
   "./vendor/prism.js",
+  "./vendor/marked.js",
   "./locales.js",
   "./api.js",
   "./renderer.js",

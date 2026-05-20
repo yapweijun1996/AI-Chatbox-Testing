@@ -233,6 +233,26 @@ body {
 .send-btn:disabled { background: transparent; color: var(--text-secondary); opacity: 0.3; cursor: not-allowed; }
 .footer-note { font-size: 10px; color: var(--text-secondary); text-align: center; margin-top: 8px; }
 
+/* Mobile Responsive Off-Canvas Sidebar Overlay */
 @media (max-width: 768px) {
-  .sidebar { display: none; }
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 260px;
+    z-index: 1000;
+    transform: translateX(0);
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+  .sidebar.collapsed {
+    transform: translateX(-260px);
+    width: 260px;
+    opacity: 1;
+    pointer-events: none;
+  }
+  .sidebar:not(.collapsed) ~ .sidebar-mask {
+    display: block;
+    opacity: 1;
+  }
 }

@@ -42,6 +42,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   await switchProviderTab(currentProvider);
   applyLanguage(currentLocale);
   getEl("setting-locale").value = currentLocale;
+  if (window.innerWidth <= 768) DOM.sidebar.classList.add("collapsed");
   initEventListeners();
   initTooltips();
   registerServiceWorker();
@@ -61,6 +62,34 @@ async function loadSessions() {
       <button class="session-delete" onclick="event.stopPropagation(); handleDeleteSession(${session.id})">&times;</button>
     `;
     item.addEventListener("click", () => selectSession(session.id));
+    
+    const titleEl = item.querySelector(".session-title");
+    titleEl.addEventListener("dblclick", (e) => {
+      e.stopPropagation();
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "session-rename-input";
+      input.value = session.title;
+      titleEl.replaceWith(input);
+      input.focus();
+      
+      let saved = false;
+      const saveRename = async () => {
+        if (saved) return;
+        saved = true;
+        const newTitle = input.value.trim();
+        if (newTitle && newTitle !== session.title) {
+          await updateSessionTitle(session.id, newTitle);
+          session.title = newTitle;
+        }
+        await loadSessions();
+      };
+      input.addEventListener("keydown", (evt) => {
+        if (evt.key === "Enter" && !evt.shiftKey) saveRename();
+        if (evt.key === "Escape") loadSessions();
+      });
+      input.addEventListener("blur", saveRename);
+    });
     DOM.sessionsList.appendChild(item);
   });
 }
@@ -119,6 +148,13 @@ function updateStatus(connected) {
   if (!DOM.sendBtn.classList.contains("generating")) DOM.sendBtn.disabled = !connected || DOM.chatInput.value.trim() === "";
 }
 
+async function refreshTabIndicators() {
+  DOM.providerTabs.forEach(async tab => {
+    const config = await getSetting(tab.dataset.provider);
+    tab.classList.toggle("configured", !!(config && config.apiKey));
+  });
+}
+
 DOM.providerForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const config = { baseUrl: DOM.baseUrlInput.value.trim(), apiKey: obfuscate(DOM.apiKeyInput.value.trim()), model: DOM.modelInput.value.trim() };
@@ -127,6 +163,7 @@ DOM.providerForm.addEventListener("submit", async (e) => {
   const newLocale = getEl("setting-locale").value;
   localStorage.setItem("lastLocale", newLocale);
   applyLanguage(newLocale);
+  await refreshTabIndicators();
   updateStatus(true);
   DOM.currentModelText.textContent = `${currentProvider.toUpperCase()} / ${config.model}`;
   DOM.settingsDrawer.classList.remove("open");
@@ -141,7 +178,7 @@ function setSendButtonState(isGen) {
 
 function initEventListeners() {
   DOM.themeBtn.addEventListener("click", toggleTheme);
-  DOM.settingsBtn.addEventListener("click", () => DOM.settingsDrawer.classList.add("open"));
+  DOM.settingsBtn.addEventListener("click", () => { DOM.settingsDrawer.classList.add("open"); refreshTabIndicators(); });
   DOM.closeSettingsBtn.addEventListener("click", () => DOM.settingsDrawer.classList.remove("open"));
   DOM.sidebarToggleBtn.addEventListener("click", () => DOM.sidebar.classList.toggle("collapsed"));
   DOM.newChatBtn.addEventListener("click", async () => {
@@ -170,6 +207,7 @@ function initEventListeners() {
   });
   getEl("card-setup-keys").addEventListener("click", () => DOM.settingsDrawer.classList.add("open"));
   getEl("card-start-chat").addEventListener("click", () => DOM.newChatBtn.click());
+  getEl("sidebar-mask").addEventListener("click", () => DOM.sidebar.classList.add("collapsed"));
 }
 
 function renderMessages(messages) {

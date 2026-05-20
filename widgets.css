@@ -124,8 +124,76 @@
 .message-bubble h3 { font-size: 1.05rem; }
 .message-bubble p { margin-bottom: 8px; line-height: 1.55; }
 .message-bubble p:last-child { margin-bottom: 0; }
-.message-bubble ul { padding-left: 20px; margin: 8px 0; list-style-type: disc; }
+.message-bubble ul, .message-bubble ol { padding-left: 20px; margin: 8px 0; }
+.message-bubble ul { list-style-type: disc; }
+.message-bubble ol { list-style-type: decimal; }
 .message-bubble li { margin-bottom: 4px; }
 .message-bubble blockquote { border-left: 3px solid var(--accent-color); padding-left: 12px; color: var(--text-secondary); font-style: italic; margin: 10px 0; }
 .chat-link { color: var(--accent-color); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s; }
 .chat-link:hover { border-bottom-color: var(--accent-color); }
+
+/* Sidebar Mask Backdrop overlay */
+.sidebar-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 900;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Session rename input element */
+.session-rename-input {
+  background: var(--message-ai-bg);
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 13px;
+  color: var(--text-primary);
+  outline: none;
+  width: calc(100% - 20px);
+}
+
+/* Green dot next to configured provider tab-btns */
+.tab-btn.configured::after {
+  content: " ●";
+  color: #34C759;
+  font-size: 8px;
+  vertical-align: middle;
+}
+
+/* Markdown table styling */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  margin: 14px 0;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+}
+.message-bubble table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+.message-bubble th, .message-bubble td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.message-bubble th {
+  background: var(--sidebar-bg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.message-bubble tr:last-child td {
+  border-bottom: none;
+}
+.message-bubble tr:nth-child(even) td {
+  background: rgba(0, 0, 0, 0.02);
+}

@@ -40,6 +40,7 @@ function parseMarkdown(text) {
   // 4. Split into lines for block-level parsing
   const lines = escaped.split("\n");
   let inList = false;
+  let inTable = false;
   let html = [];
 
   for (let line of lines) {
@@ -47,28 +48,69 @@ function parseMarkdown(text) {
 
     // Skip if line is inside pre-rendered block
     if (trimmed.startsWith("<pre") || trimmed.startsWith("<div") || trimmed.startsWith("</pre") || trimmed.startsWith("<code") || trimmed.startsWith("</code")) {
-      if (inList) { html.push("</ul>"); inList = false; }
+      if (inList) { html.push(inList === "ol" ? "</ol>" : "</ul>"); inList = false; }
+      if (inTable) { html.push("</tbody></table></div>"); inTable = false; }
       html.push(line);
       continue;
     }
 
+    // Markdown Table parsing: | Header | Header |
+    if (trimmed.startsWith("|") && trimmed.endsWith("|")) {
+      if (inList) { html.push(inList === "ol" ? "</ol>" : "</ul>"); inList = false; }
+      const cells = trimmed.split("|").slice(1, -1).map(c => c.trim());
+      const isDivider = cells.every(c => /^:?-+:?$/.test(c));
+      if (isDivider) continue; // Skip divider row, browser handles layout
+      
+      if (!inTable) {
+        html.push("<div class='table-responsive'><table><thead>");
+        html.push("<tr>" + cells.map(c => `<th>${parseInline(c)}</th>`).join("") + "</tr>");
+        html.push("</thead><tbody>");
+        inTable = true;
+      } else {
+        html.push("<tr>" + cells.map(c => `<td>${parseInline(c)}</td>`).join("") + "</tr>");
+      }
+      continue;
+    }
+
+    // Close Table if line is not a table row
+    if (inTable && (!trimmed.startsWith("|") || !trimmed.endsWith("|"))) {
+      html.push("</tbody></table></div>");
+      inTable = false;
+    }
+
     // Blockquote: > text
     if (trimmed.startsWith("&gt; ")) {
-      if (inList) { html.push("</ul>"); inList = false; }
+      if (inList) { html.push(inList === "ol" ? "</ol>" : "</ul>"); inList = false; }
       html.push(`<blockquote>${parseInline(trimmed.slice(5))}</blockquote>`);
       continue;
     }
 
     // Unordered List: - text or * text
     if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
-      if (!inList) { html.push("<ul>"); inList = true; }
+      if (inList !== "ul") {
+        if (inList) html.push("</ol>");
+        html.push("<ul>");
+        inList = "ul";
+      }
       html.push(`<li>${parseInline(trimmed.slice(2))}</li>`);
       continue;
     }
 
+    // Ordered List: 1. text
+    let olMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
+    if (olMatch) {
+      if (inList !== "ol") {
+        if (inList) html.push("</ul>");
+        html.push("<ol>");
+        inList = "ol";
+      }
+      html.push(`<li>${parseInline(olMatch[2])}</li>`);
+      continue;
+    }
+
     // If list ends
-    if (inList && !trimmed.startsWith("- ") && !trimmed.startsWith("* ") && trimmed !== "") {
-      html.push("</ul>");
+    if (inList && !trimmed.startsWith("- ") && !trimmed.startsWith("* ") && !trimmed.match(/^\d+\.\s+/) && trimmed !== "") {
+      html.push(inList === "ol" ? "</ol>" : "</ul>");
       inList = false;
     }
 
@@ -90,7 +132,8 @@ function parseMarkdown(text) {
     html.push(`<p>${parseInline(line)}</p>`);
   }
 
-  if (inList) html.push("</ul>");
+  if (inList) html.push(inList === "ol" ? "</ol>" : "</ul>");
+  if (inTable) html.push("</tbody></table></div>");
 
   return html.join("");
 }

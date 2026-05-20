@@ -172,6 +172,34 @@ function deleteSession(sessionId) {
   });
 }
 
+function updateSessionTitle(sessionId, title) {
+  return new Promise((resolve, reject) => {
+    if (useFallback) {
+      if (fallbackStore.sessions[sessionId]) {
+        fallbackStore.sessions[sessionId].title = title;
+        fallbackStore.sessions[sessionId].updatedAt = Date.now();
+      }
+      resolve();
+      return;
+    }
+    const store = getStore("sessions", "readwrite");
+    const getReq = store.get(Number(sessionId));
+    getReq.onsuccess = () => {
+      const session = getReq.result;
+      if (session) {
+        session.title = title;
+        session.updatedAt = Date.now();
+        const putReq = store.put(session);
+        putReq.onsuccess = () => resolve();
+        putReq.onerror = () => reject(putReq.error);
+      } else {
+        resolve();
+      }
+    };
+    getReq.onerror = () => reject(getReq.error);
+  });
+}
+
 // Messages management
 function addMessage(sessionId, role, content, performance = null) {
   return new Promise((resolve, reject) => {

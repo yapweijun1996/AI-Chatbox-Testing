@@ -224,6 +224,7 @@ function appendMessageToDOM(role, content, performanceData = null) {
     `;
   } else {
     bubble.innerHTML = parseMarkdown(content);
+    if (window.Prism) Prism.highlightAllUnder(bubble);
   }
   
   if (role === "assistant" && performanceData) {
@@ -280,6 +281,7 @@ async function handleSend() {
     }, activeAbortController.signal);
 
     aiBubble.innerHTML += renderPerformanceBadge(perfData);
+    if (window.Prism) Prism.highlightAllUnder(aiBubble);
     scrollToBottomSmart();
 
     await addMessage(activeSessionId, "assistant", perfData.fullText, perfData);

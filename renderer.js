@@ -22,13 +22,14 @@ function parseMarkdown(text) {
   // 2. Multi-line code block: ```lang\ncode\n```
   const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g;
   escaped = escaped.replace(codeBlockRegex, (match, lang, code) => {
+    const languageClass = `language-${lang || 'plaintext'}`;
     return `
-      <pre>
+      <pre class="${languageClass}">
         <div class="code-block-header">
           <span>${lang || "code"}</span>
           <button class="copy-btn" onclick="copyCode(this)">Copy</button>
         </div>
-        <code>${code.trim()}</code>
+        <code class="${languageClass}">${code.trim()}</code>
       </pre>
     `;
   });

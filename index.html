@@ -7,15 +7,18 @@
   
   <!-- PWA & Mobile Standalone Meta Tags -->
   <link rel="manifest" href="manifest.json">
+  <link rel="shortcut icon" href="icon.svg" type="image/svg+xml">
   <meta name="theme-color" content="#007AFF" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0A84FF" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Cosmic Chat">
   <link rel="apple-touch-icon" href="icon.svg">
   
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="widgets.css">
+  <link rel="stylesheet" href="vendor/prism.css">
 </head>
 <body>
   <div class="app-container">
@@ -124,7 +127,7 @@
             
             <div class="form-group">
               <label for="setting-api-key">API Key (API Secret Key)</label>
-              <input type="password" id="setting-api-key" placeholder="sk-..." required>
+              <input type="password" id="setting-api-key" placeholder="sk-..." autocomplete="current-password" required>
             </div>
 
             <div class="form-group">
@@ -148,6 +151,7 @@
   <!-- Scripts -->
   <script src="crypto.js"></script>
   <script src="db.js"></script>
+  <script src="vendor/prism.js"></script>
   <script src="api.js"></script>
   <script src="renderer.js"></script>
   <script src="app.js"></script>

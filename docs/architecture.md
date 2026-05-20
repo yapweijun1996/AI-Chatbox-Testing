@@ -13,7 +13,7 @@ Cosmic Pixel employs a strict **Bring Your Own Key (BYOK)** model. Credentials n
 
 ### 1.2 Cryptographic Obfuscation Protocol (`crypto.js`)
 - **Vulnerability Mitigated**: Plain text scanning from untrusted browser extensions or cross-site scripting (XSS) scraping.
-- **Implementation**: API keys are transformed using a stream-like $\mathcal{O}(1)$ complexity **Base64 + XOR (Exclusive OR) mutator** with a local salt before serialization.
+- **Implementation**: API keys are transformed using a stream-like $\mathcal{O}(1)$ complexity **Base64 + XOR (Exclusive OR) mutator** with a local salt (`CosmicPixelSecureUniversalByokXorKey`) before serialization.
 - **Persistence Boundary**: Key data exists on the physical disk (IndexedDB) purely as un-scannable ciphertexts. De-obfuscation occurs in-memory only during `fetch` stream initialization and is instantly garbage collected.
 
 ---
@@ -34,7 +34,7 @@ The client persistence layer leverages standard asynchronous IndexedDB object st
 
 ---
 
-## 3. SSE Stream Decoder (`app.js` & `renderer.js`)
+## 3. SSE Stream Decoder (`api.js`, `app.js` & `renderer.js`)
 
 We stream text generation in real-time utilizing **Server-Sent Events (SSE)**.
 
@@ -44,23 +44,28 @@ Cosmic Pixel intentionally rejects the default HTML5 `EventSource` API in favor 
 - **Custom Header Injection**: `EventSource` forbids Custom Headers, making secure, serverless Bearer key injection impossible without placing keys inside visible URL queries.
 - **Fetch Solution**: Using `fetch` with `ReadableStream` enables sending standard POST requests with deep nested chat history JSON bodies while safely binding Keys inside standard request header scopes.
 
-### 3.2 Resilience & Buffering
+### 3.2 Cancelable Streams via `AbortController`
+- Integrated an standard `AbortController` signal pipeline. Users can abort the fetch stream midway (via an interactive "■" stop button), safely halting active connections and conserving API tokens on the model provider side.
+
+### 3.3 Resilience & Buffering
 - **Chunk splitting**: Handles partial JSON chunks in stream packets using high-resiliency try-catch string validation blocks, guaranteeing that raw network packet cuts never crash the UI render loop.
 
 ---
 
-## 4. OTel-Style Telemetry Metrics (`app.js` & `renderer.js`)
+## 4. High-Resolution Telemetry Metrics (`api.js` & `renderer.js`)
 
-A standard OpenTelemetry (OTel)-compliant performance tracking engine measures real-time inference latency.
+A custom telemetry engine measures millisecond-level network connection latency and model inference performance.
 
 ### 4.1 Telemetry Metrics Definition
-- **TTFT (Time to First Token)**: Span delta from network fetch trigger to the arrival of the first non-empty text character. Represents the LLM prefill execution.
-- **TPS (Tokens Per Second)**: Generated tokens divided by decode duration (E2E Latency minus TTFT). Measures pure LLM decode speed.
-- **ITL (Inter-Token Latency)**: Generation duration (E2E Latency minus TTFT) divided by generated tokens. Reflects word-by-word fluid pace.
+- **Connection Latency / FBL (First Byte Latency)**: Span delta from network fetch initiation to response headers received. Reflects DNS, TCP handshake, and TLS negotiation duration.
+- **TTFT (Time to First Token)**: Span delta from fetch trigger to the arrival of the first non-empty text token. Represents model prefill/thinking time.
+- **Speed (Tokens Per Second - TPS)**: Generated tokens divided by decode duration (total generation duration minus TTFT). Measures pure LLM token generation throughput.
+- **ITL (Inter-Token Latency)**: Generation duration (total generation duration minus TTFT) divided by generated tokens. Reflects word-by-word fluidity.
+- **Total Duration (E2E)**: Total roundtrip time from clicking "Send" to stream termination.
 - **Token Estimation**: Estimated using an optimal heuristic ratio ($\text{Length} / 3.2$), ensuring accurate stats across mixed multilingual streams without introducing bloated node tokenizers.
 
-### 4.2 Visual Badge Render
-- Badge components are integrated at the foot of each assistant bubble, displaying performance on hover to maintain design purity.
+### 4.2 Interactive Tooltips
+- Metric Badges are fully interactive. Hovering over a metric displays a mouse-following custom tooltip (`.custom-tooltip`) explaining the definition and meaning of the metric in plain language.
 
 ---
 
@@ -68,5 +73,5 @@ A standard OpenTelemetry (OTel)-compliant performance tracking engine measures r
 
 Compliant with W3C 2026 progressive web standards.
 
-- **Window Controls Overlay (WCO)**: Enables clean macOS/Windows custom title-bar rendering when running in standalone mode.
-- **Stale-While-Revalidate Caching**: Caches static shell files (`index.html`, `styles.css`, `app.js`, etc.) locally. Injected with a critical bypass that ignores POST or external API streams, protecting SSE streaming from packet buffering loops.
+- **Caching Lifecycle (Version `v2`)**: Stores shell assets (`index.html`, `styles.css`, `widgets.css`, `db.js`, `crypto.js`, `api.js`, `renderer.js`, `app.js`, and `vendor/` assets) locally using a Stale-While-Revalidate caching pattern.
+- **Bypass Filters**: Ignore non-GET requests or requests destined for external hosts, ensuring real-time Server-Sent Events (SSE) streaming connections bypass caching completely.

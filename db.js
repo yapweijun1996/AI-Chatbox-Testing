@@ -90,7 +90,7 @@ function getSetting(provider) {
 }
 
 // Session (Conversations) management
-function createSession(title = "未命名对话") {
+function createSession(title = "Untitled Session") {
   return new Promise((resolve, reject) => {
     const session = {
       title,

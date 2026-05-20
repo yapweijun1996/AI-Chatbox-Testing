@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Cosmic Pixel - Apple Style AI Chatbox</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <button id="new-chat-btn" class="btn btn-primary new-chat-btn">
+          <span class="icon-plus"></span>
+          <span>新对话</span>
+        </button>
+      </div>
+      
+      <div class="sidebar-body">
+        <div class="history-label">最近对话</div>
+        <div id="sessions-list" class="sessions-list">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+      
+      <div class="sidebar-footer">
+        <button id="theme-toggle-btn" class="icon-btn" title="切换主题">
+          <span class="icon-theme"></span>
+        </button>
+        <button id="settings-toggle-btn" class="icon-btn" title="服务商配置">
+          <span class="icon-settings"></span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <main class="chat-area">
+      <!-- Status Pill & Header -->
+      <header class="chat-header">
+        <div class="header-left">
+          <div class="status-pill" id="status-pill">
+            <span class="status-dot green"></span>
+            <span id="status-text">已连接 (BYOK)</span>
+          </div>
+        </div>
+        <div class="header-center">
+          <span id="current-provider-model" class="current-model-info">OpenAI / gpt-4o-mini</span>
+        </div>
+        <div class="header-right">
+          <!-- Placeholder for alignment -->
+        </div>
+      </header>
+
+      <!-- Messages Stream Viewport -->
+      <section id="chat-viewport" class="chat-viewport">
+        <!-- Default Welcome State -->
+        <div id="welcome-view" class="welcome-view">
+          <div class="welcome-logo"></div>
+          <h1>欢迎使用隐私安全 AI 助手</h1>
+          <p>所有密钥均在本地加密混淆存储，流式对话直接连接大模型 API，零服务器日志留存。</p>
+          <div class="welcome-cards">
+            <div class="welcome-card" id="card-setup-keys">
+              <h3>🔑 第一步：配置密钥</h3>
+              <p>点击下方或侧边栏设置，填入您的 API Key 和基础 URL。</p>
+            </div>
+            <div class="welcome-card" id="card-start-chat">
+              <h3>💬 第二步：开始对话</h3>
+              <p>在下方输入框中键入任何内容，开启极速流式对话。</p>
+            </div>
+          </div>
+        </div>
+        <!-- Chat message items -->
+        <div id="messages-list" class="messages-list"></div>
+      </section>
+
+      <!-- Floating Input Bar -->
+      <footer class="chat-footer">
+        <div class="input-container">
+          <textarea id="chat-input" placeholder="给 AI 助手发送消息..." rows="1"></textarea>
+          <button id="send-btn" class="send-btn" disabled>
+            <span class="icon-arrow-up"></span>
+          </button>
+        </div>
+        <p class="footer-note">数据直接发送至您配置的大模型提供商，本地加密保护隐私安全</p>
+      </footer>
+    </main>
+
+    <!-- Settings Overlay / Drawer -->
+    <div id="settings-drawer" class="settings-drawer-overlay">
+      <div class="settings-drawer-content">
+        <div class="drawer-header">
+          <h2>密钥与模型配置 (BYOK)</h2>
+          <button id="close-settings-btn" class="icon-btn-close">&times;</button>
+        </div>
+        
+        <div class="drawer-tabs">
+          <button class="tab-btn active" data-provider="openai">OpenAI</button>
+          <button class="tab-btn" data-provider="gemini">Gemini</button>
+          <button class="tab-btn" data-provider="anthropic">Anthropic</button>
+          <button class="tab-btn" data-provider="lmstudio">LM Studio</button>
+        </div>
+
+        <div class="drawer-body">
+          <form id="provider-form">
+            <div class="form-group">
+              <label for="setting-base-url">API 基础 URL (Endpoint Base URL)</label>
+              <input type="text" id="setting-base-url" placeholder="https://api.openai.com/v1" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="setting-api-key">API 密钥 (API Key)</label>
+              <input type="password" id="setting-api-key" placeholder="sk-..." required>
+            </div>
+
+            <div class="form-group">
+              <label for="setting-model">默认模型名称 (Model Name)</label>
+              <input type="text" id="setting-model" placeholder="gpt-4o-mini" required>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary btn-block">保存配置</button>
+            </div>
+          </form>
+          
+          <div class="privacy-warning">
+            🔒 Base64及XOR轻量混淆加密，本地持久化存储(IndexedDB)
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="crypto.js"></script>
+  <script src="db.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

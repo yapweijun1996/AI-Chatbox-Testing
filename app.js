@@ -46,6 +46,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   await loadSessions();
   await switchProviderTab(currentProvider);
   initEventListeners();
+  registerServiceWorker();
 });
 
 function initTheme() {
@@ -294,5 +295,15 @@ async function handleSend() {
     aiBubble.innerHTML = `<span style="color: #FF453A;">Error: Unable to fetch response. Please verify your API Key, Base URL, and connection.</span><br><small>${escapeHTML(err.message)}</small>`;
   } finally {
     updateStatus(true);
+  }
+}
+
+function registerServiceWorker() {
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js")
+        .then((reg) => console.log("ServiceWorker registered successfully with scope: ", reg.scope))
+        .catch((err) => console.warn("ServiceWorker registration failed: ", err));
+    });
   }
 }

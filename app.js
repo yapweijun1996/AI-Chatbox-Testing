@@ -47,23 +47,10 @@ window.addEventListener("DOMContentLoaded", async () => {
   registerServiceWorker();
 });
 
-function initTheme() {
-  document.documentElement.setAttribute("data-theme", localStorage.getItem("theme") || "light");
-}
-
-function toggleTheme() {
-  const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-  document.documentElement.setAttribute("data-theme", next);
-  localStorage.setItem("theme", next);
-}
-
 async function loadSessions() {
   const sessions = await getSessions();
   DOM.sessionsList.innerHTML = "";
-  if (sessions.length === 0) {
-    showWelcomeState(true);
-    return;
-  }
+  if (sessions.length === 0) { showWelcomeState(true); return; }
   sessions.forEach(session => {
     const activeClass = activeSessionId === session.id ? "active" : "";
     const item = document.createElement("div");
@@ -84,8 +71,7 @@ async function selectSession(sessionId) {
   document.querySelectorAll(".session-item").forEach(item => {
     item.classList.toggle("active", Number(item.dataset.id) === sessionId);
   });
-  const messages = await getMessages(sessionId);
-  renderMessages(messages);
+  renderMessages(await getMessages(sessionId));
 }
 
 function showWelcomeState(show) {
@@ -105,10 +91,8 @@ async function switchProviderTab(provider) {
   currentProvider = provider;
   localStorage.setItem("lastProvider", provider);
   DOM.providerTabs.forEach(t => t.classList.toggle("active", t.dataset.provider === provider));
-  
   const savedConfig = await getSetting(provider);
   activeConfig = savedConfig;
-
   if (savedConfig) {
     DOM.baseUrlInput.value = savedConfig.baseUrl;
     DOM.apiKeyInput.value = deobfuscate(savedConfig.apiKey);
@@ -132,42 +116,27 @@ function updateStatus(connected) {
   const dot = DOM.statusPill.querySelector(".status-dot");
   dot.className = connected ? "status-dot green" : "status-dot yellow";
   DOM.statusText.textContent = getLocaleString(connected ? "headerConnected" : "headerMissingKey");
-  if (!DOM.sendBtn.classList.contains("generating")) {
-    DOM.sendBtn.disabled = !connected || DOM.chatInput.value.trim() === "";
-  }
+  if (!DOM.sendBtn.classList.contains("generating")) DOM.sendBtn.disabled = !connected || DOM.chatInput.value.trim() === "";
 }
 
 DOM.providerForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const config = {
-    baseUrl: DOM.baseUrlInput.value.trim(),
-    apiKey: obfuscate(DOM.apiKeyInput.value.trim()),
-    model: DOM.modelInput.value.trim()
-  };
+  const config = { baseUrl: DOM.baseUrlInput.value.trim(), apiKey: obfuscate(DOM.apiKeyInput.value.trim()), model: DOM.modelInput.value.trim() };
   await saveSetting(currentProvider, config);
   activeConfig = config;
-  
   const newLocale = getEl("setting-locale").value;
   localStorage.setItem("lastLocale", newLocale);
   applyLanguage(newLocale);
-  
   updateStatus(true);
   DOM.currentModelText.textContent = `${currentProvider.toUpperCase()} / ${config.model}`;
   DOM.settingsDrawer.classList.remove("open");
 });
 
-function setSendButtonState(isGenerating) {
-  if (isGenerating) {
-    DOM.sendBtn.disabled = false;
-    DOM.sendBtn.innerHTML = `<span class="icon-stop" style="color: #FF453A; font-size: 10px; font-weight: bold;">■</span>`;
-    DOM.sendBtn.style.backgroundColor = "rgba(255, 69, 58, 0.15)";
-    DOM.sendBtn.classList.add("generating");
-  } else {
-    DOM.sendBtn.disabled = DOM.chatInput.value.trim() === "";
-    DOM.sendBtn.innerHTML = `<span class="icon-arrow-up"></span>`;
-    DOM.sendBtn.style.backgroundColor = "";
-    DOM.sendBtn.classList.remove("generating");
-  }
+function setSendButtonState(isGen) {
+  DOM.sendBtn.disabled = isGen ? false : DOM.chatInput.value.trim() === "";
+  DOM.sendBtn.innerHTML = isGen ? `<span class="icon-stop" style="color: #FF453A; font-size: 10px; font-weight: bold;">■</span>` : `<span class="icon-arrow-up"></span>`;
+  DOM.sendBtn.style.backgroundColor = isGen ? "rgba(255, 69, 58, 0.15)" : "";
+  DOM.sendBtn.classList.toggle("generating", isGen);
 }
 
 function initEventListeners() {
@@ -175,44 +144,30 @@ function initEventListeners() {
   DOM.settingsBtn.addEventListener("click", () => DOM.settingsDrawer.classList.add("open"));
   DOM.closeSettingsBtn.addEventListener("click", () => DOM.settingsDrawer.classList.remove("open"));
   DOM.sidebarToggleBtn.addEventListener("click", () => DOM.sidebar.classList.toggle("collapsed"));
-  
   DOM.newChatBtn.addEventListener("click", async () => {
     const session = await createSession();
     activeSessionId = session.id;
     await loadSessions();
     await selectSession(session.id);
   });
-
   DOM.providerTabs.forEach(tab => {
     tab.addEventListener("click", () => switchProviderTab(tab.dataset.provider));
   });
-
   DOM.chatInput.addEventListener("input", () => {
     DOM.chatInput.style.height = "auto";
     DOM.chatInput.style.height = `${DOM.chatInput.scrollHeight}px`;
-    if (!DOM.sendBtn.classList.contains("generating")) {
-      DOM.sendBtn.disabled = !activeConfig || DOM.chatInput.value.trim() === "";
-    }
+    if (!DOM.sendBtn.classList.contains("generating")) DOM.sendBtn.disabled = !activeConfig || DOM.chatInput.value.trim() === "";
   });
-
   DOM.chatInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      if (!DOM.sendBtn.classList.contains("generating")) handleSend();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!DOM.sendBtn.classList.contains("generating")) handleSend(); }
   });
-
   DOM.sendBtn.addEventListener("click", () => {
     if (DOM.sendBtn.classList.contains("generating")) {
-      if (activeAbortController) {
-        activeAbortController.abort();
-        activeAbortController = null;
-      }
+      if (activeAbortController) { activeAbortController.abort(); activeAbortController = null; }
     } else {
       handleSend();
     }
   });
-  
   getEl("card-setup-keys").addEventListener("click", () => DOM.settingsDrawer.classList.add("open"));
   getEl("card-start-chat").addEventListener("click", () => DOM.newChatBtn.click());
 }
@@ -228,7 +183,6 @@ function appendMessageToDOM(role, content, performanceData = null) {
   item.className = `message-item ${role}`;
   const bubble = document.createElement("div");
   bubble.className = "message-bubble";
-  
   if (content === "Thinking...") {
     bubble.innerHTML = `
       <div class="thinking-dots">
@@ -241,7 +195,6 @@ function appendMessageToDOM(role, content, performanceData = null) {
     bubble.innerHTML = parseMarkdown(content);
     if (window.Prism) Prism.highlightAllUnder(bubble);
   }
-  
   if (role === "assistant" && performanceData) {
     bubble.innerHTML += renderPerformanceBadge(performanceData);
   }
@@ -264,41 +217,33 @@ function scrollToBottomSmart(force = false) {
 async function handleSend() {
   const content = DOM.chatInput.value.trim();
   if (!content || !activeConfig) return;
-
   DOM.chatInput.value = "";
   DOM.chatInput.style.height = "auto";
   activeAbortController = new AbortController();
   setSendButtonState(true);
-
   if (!activeSessionId) {
     const session = await createSession(content.slice(0, 20) + (content.length > 20 ? "..." : ""));
     activeSessionId = session.id;
     await loadSessions();
     showWelcomeState(false);
   }
-
   await addMessage(activeSessionId, "user", content);
   appendMessageToDOM("user", content);
   scrollToBottomSmart(true);
-
   const aiBubble = appendMessageToDOM("assistant", "Thinking...");
   scrollToBottomSmart(true);
-
   const dot = DOM.statusPill.querySelector(".status-dot");
   dot.className = "status-dot yellow";
   DOM.statusText.textContent = getLocaleString("headerGenerating");
-
   try {
     const messages = await getMessages(activeSessionId);
     const perfData = await streamChatCompletion(activeConfig, messages, ({ fullText }) => {
       aiBubble.innerHTML = parseMarkdown(fullText);
       scrollToBottomSmart();
     }, activeAbortController.signal);
-
     aiBubble.innerHTML += renderPerformanceBadge(perfData);
     if (window.Prism) Prism.highlightAllUnder(aiBubble);
     scrollToBottomSmart();
-
     await addMessage(activeSessionId, "assistant", perfData.fullText, perfData);
     await loadSessions();
   } catch (err) {
@@ -313,51 +258,5 @@ async function handleSend() {
     activeAbortController = null;
     setSendButtonState(false);
     updateStatus(true);
-  }
-}
-
-function initTooltips() {
-  const tooltipEl = document.createElement("div");
-  tooltipEl.id = "global-tooltip";
-  tooltipEl.className = "custom-tooltip";
-  document.body.appendChild(tooltipEl);
-
-  document.body.addEventListener("mouseover", (e) => {
-    const target = e.target.closest("[data-tooltip]");
-    if (target) {
-      tooltipEl.textContent = target.getAttribute("data-tooltip");
-      tooltipEl.style.display = "block";
-      setTimeout(() => tooltipEl.classList.add("visible"), 10);
-    }
-  });
-
-  document.body.addEventListener("mousemove", (e) => {
-    if (tooltipEl.style.display === "block") {
-      const offsetX = 12, offsetY = 12;
-      let left = e.pageX + offsetX, top = e.pageY + offsetY;
-      const tooltipRect = tooltipEl.getBoundingClientRect();
-      if (left + tooltipRect.width > window.innerWidth) left = e.pageX - tooltipRect.width - offsetX;
-      if (top + tooltipRect.height > window.innerHeight) top = e.pageY - tooltipRect.height - offsetY;
-      tooltipEl.style.left = `${left}px`;
-      tooltipEl.style.top = `${top}px`;
-    }
-  });
-
-  document.body.addEventListener("mouseout", (e) => {
-    const target = e.target.closest("[data-tooltip]");
-    if (target) {
-      tooltipEl.classList.remove("visible");
-      tooltipEl.style.display = "none";
-    }
-  });
-}
-
-function registerServiceWorker() {
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js")
-        .then((reg) => console.log("ServiceWorker registered successfully with scope: ", reg.scope))
-        .catch((err) => console.warn("ServiceWorker registration failed: ", err));
-    });
   }
 }

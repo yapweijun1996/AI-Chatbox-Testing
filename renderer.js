@@ -138,3 +138,60 @@ window.copyCode = (btn) => {
     }, 1500);
   });
 };
+
+// UI Presentation & Theme helpers (Refactored from app.js)
+function initTheme() {
+  document.documentElement.setAttribute("data-theme", localStorage.getItem("theme") || "light");
+}
+
+function toggleTheme() {
+  const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  localStorage.setItem("theme", next);
+}
+
+function initTooltips() {
+  const tooltipEl = document.createElement("div");
+  tooltipEl.id = "global-tooltip";
+  tooltipEl.className = "custom-tooltip";
+  document.body.appendChild(tooltipEl);
+
+  document.body.addEventListener("mouseover", (e) => {
+    const target = e.target.closest("[data-tooltip]");
+    if (target) {
+      tooltipEl.textContent = target.getAttribute("data-tooltip");
+      tooltipEl.style.display = "block";
+      setTimeout(() => tooltipEl.classList.add("visible"), 10);
+    }
+  });
+
+  document.body.addEventListener("mousemove", (e) => {
+    if (tooltipEl.style.display === "block") {
+      const offsetX = 12, offsetY = 12;
+      let left = e.pageX + offsetX, top = e.pageY + offsetY;
+      const tooltipRect = tooltipEl.getBoundingClientRect();
+      if (left + tooltipRect.width > window.innerWidth) left = e.pageX - tooltipRect.width - offsetX;
+      if (top + tooltipRect.height > window.innerHeight) top = e.pageY - tooltipRect.height - offsetY;
+      tooltipEl.style.left = `${left}px`;
+      tooltipEl.style.top = `${top}px`;
+    }
+  });
+
+  document.body.addEventListener("mouseout", (e) => {
+    const target = e.target.closest("[data-tooltip]");
+    if (target) {
+      tooltipEl.classList.remove("visible");
+      tooltipEl.style.display = "none";
+    }
+  });
+}
+
+function registerServiceWorker() {
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js")
+        .then((reg) => console.log("ServiceWorker registered successfully with scope: ", reg.scope))
+        .catch((err) => console.warn("ServiceWorker registration failed: ", err));
+    });
+  }
+}

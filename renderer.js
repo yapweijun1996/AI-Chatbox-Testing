@@ -133,11 +133,23 @@ function initTooltips() {
 }
 
 function registerServiceWorker() {
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js")
-        .then((reg) => console.log("ServiceWorker registered successfully with scope: ", reg.scope))
-        .catch((err) => console.warn("ServiceWorker registration failed: ", err));
-    });
-  }
+  if (!("serviceWorker" in navigator)) return;
+
+  // Auto-reload open tabs once a new service worker takes control (i.e. a new deploy).
+  // Guarded so it never fires on the first-ever install, never loops, and never
+  // interrupts an in-flight response (not persisted until the stream completes).
+  let hadController = !!navigator.serviceWorker.controller;
+  let reloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloading || !hadController) { hadController = true; return; }
+    if (window.activeAbortController) return; // streaming — reload on a later update check instead
+    reloading = true;
+    window.location.reload();
+  });
+
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js")
+      .then((reg) => console.log("ServiceWorker registered successfully with scope: ", reg.scope))
+      .catch((err) => console.warn("ServiceWorker registration failed: ", err));
+  });
 }

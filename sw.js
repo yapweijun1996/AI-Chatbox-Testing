@@ -1,4 +1,7 @@
-const CACHE_NAME = "cosmic-chat-v8";
+// Stamped with the git commit SHA at deploy time (see .github/workflows/deploy.yml).
+// Locally the placeholder stays literal, which still yields a stable cache name.
+const CACHE_VERSION = "__BUILD_SHA__";
+const CACHE_NAME = `cosmic-chat-${CACHE_VERSION}`;
 const ASSETS = [
   "./",
   "./index.html",

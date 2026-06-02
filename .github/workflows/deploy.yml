@@ -25,6 +25,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Stamp service worker cache version with commit SHA
+        run: |
+          grep -q "__BUILD_SHA__" sw.js || { echo "::error::__BUILD_SHA__ placeholder not found in sw.js"; exit 1; }
+          sed -i "s/__BUILD_SHA__/${GITHUB_SHA}/g" sw.js
+          echo "Stamped sw.js -> cosmic-chat-${GITHUB_SHA}"
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 

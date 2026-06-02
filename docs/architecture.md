@@ -4,7 +4,7 @@ This document outlines the detailed system specifications, security paradigms, n
 
 ---
 
-## 1. BYOK Security & Obfuscation Layer (`crypto.js` & `db.js`)
+## 1. BYOK Security & Obfuscation Layer (`crypto.js`, `db-init.js` & `db-operations.js`)
 
 Cosmic Pixel employs a strict **Bring Your Own Key (BYOK)** model. Credentials never touch intermediate servers and are fully contained in the browser.
 
@@ -14,11 +14,11 @@ Cosmic Pixel employs a strict **Bring Your Own Key (BYOK)** model. Credentials n
 ### 1.2 Cryptographic Obfuscation Protocol (`crypto.js`)
 - **Vulnerability Mitigated**: Plain text scanning from untrusted browser extensions or cross-site scripting (XSS) scraping.
 - **Implementation**: API keys are transformed using a stream-like $\mathcal{O}(1)$ complexity **Base64 + XOR (Exclusive OR) mutator** with a local salt (`CosmicPixelSecureUniversalByokXorKey`) before serialization.
-- **Persistence Boundary**: Key data exists on the physical disk (IndexedDB) purely as un-scannable ciphertexts. De-obfuscation occurs in-memory only during `fetch` stream initialization and is instantly garbage collected.
+- **Persistence Boundary**: Key data is written to disk (IndexedDB) only as obfuscated (non-plain-text) values. De-obfuscation happens in memory — when initializing a `fetch` stream and when populating the settings form for editing — and the plain-text key is never persisted.
 
 ---
 
-## 2. IndexedDB Schema Architecture (`db.js`)
+## 2. IndexedDB Schema Architecture (`db-init.js` & `db-operations.js`)
 
 The client persistence layer leverages standard asynchronous IndexedDB object stores.
 
@@ -27,10 +27,10 @@ The client persistence layer leverages standard asynchronous IndexedDB object st
 - **Object Stores**:
   - `settings`: Keyed by `provider` (e.g. `openai`, `gemini`). Stores `baseUrl`, `apiKey` (obfuscated), and `model` name.
   - `sessions`: Keyed by auto-incrementing `id`. Stores `title`, `createdAt`, and `updatedAt`. Contains `updatedAt` index for descending sorting.
-  - `messages`: Keyed by auto-incrementing `id`. Stores `sessionId`, `role`, `content`, `timestamp`, and `performance` (optional metadata object). Contains `sessionId` index for rapid retrieval.
+  - `messages`: Keyed by auto-incrementing `id`. Stores `sessionId`, `role`, `content`, `timestamp`, and `performance` (optional metadata object). Contains `sessionId` and `timestamp` indexes for rapid retrieval and ordering.
 
 ### 2.2 Memory Fallback (Graceful Degradation)
-- If IndexedDB is blocked (e.g. strict Private browsing or sandboxed environments), `db.js` dynamically falls back to an **in-memory object store** wrapped in sessionStorage to maintain UI execution.
+- If IndexedDB is blocked (e.g. strict Private browsing or sandboxed environments), `db-init.js` dynamically falls back to a plain **in-memory object store** to keep the UI working. This fallback is not persisted — data lives only for the current page session and is lost on reload.
 
 ---
 
@@ -73,5 +73,5 @@ A custom telemetry engine measures millisecond-level network connection latency 
 
 Compliant with W3C 2026 progressive web standards.
 
-- **Caching Lifecycle (Version `v2`)**: Stores shell assets (`index.html`, `styles.css`, `widgets.css`, `db.js`, `crypto.js`, `api.js`, `renderer.js`, `app.js`, and `vendor/` assets) locally using a Stale-While-Revalidate caching pattern.
+- **Caching Lifecycle (SHA-versioned)**: Pre-caches the static shell (`index.html`, `styles.css`, `widgets.css`, `crypto.js`, `db-init.js`, `db-operations.js`, `locales.js`, `sessions.js`, `editor.js`, `api.js`, `renderer.js`, `app.js`, `manifest.json`, `icon.svg`, plus the `vendor/` assets — Prism and Marked) using a Stale-While-Revalidate pattern. The cache name (`cosmic-chat-<commit-sha>`) is stamped from the git commit SHA at deploy time, so every deploy invalidates the previous cache; on activation the worker deletes stale caches, claims open clients, and the page auto-reloads onto the new build.
 - **Bypass Filters**: Ignore non-GET requests or requests destined for external hosts, ensuring real-time Server-Sent Events (SSE) streaming connections bypass caching completely.

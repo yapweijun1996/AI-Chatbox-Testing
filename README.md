@@ -13,7 +13,7 @@ A serverless, high-privacy AI chat application designed with a premium modern mi
 - **🧠 Smart Scroll-Locking**: Intelligent viewport logic tracks the user's reading position during streaming. If you scroll up to inspect history, auto-scrolling is locked immediately, and returns smoothly once you scroll back down.
 - **🌟 High-Fidelity Local Syntax Highlighting**: Pre-packaged with **Prism.js (Okaidia Theme)** in a standalone vendor folder, providing instant, beautiful code highlighting without any external CDNs or privacy leakage.
 - **📦 Off-grid Durability**: Employs IndexedDB for chat history, sessions, and configuration management, accompanied by a robust memory fallback mechanism.
-- **🌐 Provider Compatibility**: Directly compatible with OpenAI, Gemini, Anthropic, DeepSeek, and local LM Studio instances using standard OpenAI-compatible `/chat/completions` API interfaces.
+- **🌐 Provider Compatibility**: Works with any provider that exposes an OpenAI-compatible `/chat/completions` streaming endpoint. Ships with presets for **OpenAI**, **Google Gemini** (via its OpenAI-compatible endpoint), **Anthropic**, and **local LM Studio**; other OpenAI-compatible services (e.g. DeepSeek) work by entering their base URL. *Note: Anthropic's native API is not OpenAI-compatible — point its preset at an OpenAI-compatible endpoint or proxy.*
 
 ---
 
@@ -34,14 +34,15 @@ For testing serverless stream connections without browser file protocol limitati
 
 ## ☁️ Continuous Auto-Deployment with GitHub Pages
 
-You can host your personal, secure AI chat client for free with automatic updates:
+This repo ships a GitHub Actions workflow ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)) that builds and deploys to GitHub Pages on every push to `main`:
 
 1. Push this repository to your GitHub account.
-2. Go to your repository settings -> **Settings** tab.
+2. Go to your repository's **Settings** tab.
 3. Click on **Pages** in the left sidebar menu.
-4. Under **Build and deployment -> Source**, select `Deploy from a branch`.
-5. Select `main` branch and folder `/ (root)`, then click **Save**.
-6. Within minutes, your live demo is generated at `https://<your-username>.github.io/<your-repo-name>/`. Every subsequent `git push main` automatically builds and deploys updates instantly.
+4. Under **Build and deployment -> Source**, select **GitHub Actions** (not "Deploy from a branch").
+5. Push to `main` — or trigger it manually via **Actions -> Deploy to GitHub Pages -> Run workflow**. Within minutes your live app is generated at `https://<your-username>.github.io/<your-repo-name>/`.
+
+On each deploy the workflow stamps the service worker's cache name with the commit SHA, so the installed PWA detects the new build, drops the stale cache, and reloads open tabs onto the latest code automatically.
 
 ---
 
@@ -50,9 +51,16 @@ You can host your personal, secure AI chat client for free with automatic update
 - `index.html`: Main viewport, chat inputs, settings overlay drawer, and structured layout scripts.
 - `styles.css`: Pure responsive native CSS containing variables, dark/light themes, and custom animation curves.
 - `widgets.css`: Consolidated micro-telemetry performance metrics, pulsing thinking indicator dots, custom mouse-following tooltips, and settings overlay modals.
-- `db.js`: Promised-based IndexedDB storage manager supporting sessions, logs, and settings cascading deletes.
+- `db-init.js`: Opens the `CosmicPixelDB` IndexedDB database, defines the `sessions`/`messages`/`settings` object stores, and provides the in-memory fallback used when IndexedDB is unavailable.
+- `db-operations.js`: Promise-based CRUD for sessions, messages, and settings, including cascading session deletes.
 - `crypto.js`: Base64 and XOR dynamic obfuscator for client-side BYOK key sanitization.
 - `api.js`: Decoupled Server-Sent Events (SSE) stream client with full `AbortSignal` cancellation support.
-- `renderer.js`: Minimal dependency-free Markdown parser (supporting headings, lists, bold, italics, quote blocks), HTML escaping, and telemetry badge builders.
-- `sw.js`: PWA service worker caching static shell files with versioning (`v2`) for smooth offline caching.
-- `vendor/`: Directory for self-hosted, MIT-licensed commercial-safe Prism.js and Prism.css files.
+- `renderer.js`: Markdown rendering via the bundled **Marked.js** (custom code-block and link renderers, GFM), HTML escaping, telemetry badge builders, and theme/tooltip/service-worker helpers.
+- `sw.js`: PWA service worker that pre-caches the static shell; its cache name is stamped with the deploy commit SHA, so a new deploy busts the cache and auto-refreshes open tabs.
+- `app.js`: Application bootstrap and orchestration — global state, DOM wiring, provider-tab switching, the send/stream loop, and message rendering.
+- `sessions.js`: Sidebar session list — rendering, selection, delete (with confirm), and double-click rename.
+- `editor.js`: In-place editing of a sent message ("Save & Resubmit") and regeneration of an assistant reply.
+- `locales.js`: UI translation strings for English, Mandarin, Malay, Japanese, and Vietnamese.
+- `manifest.json`: PWA manifest — installable-app metadata, icons, and theme colors.
+- `icon.svg`: App icon used by the manifest and as the favicon.
+- `vendor/`: Self-hosted, MIT-licensed third-party libraries — Prism.js + Prism.css (Okaidia syntax theme) and Marked.js (Markdown parser). No external CDNs.

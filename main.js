@@ -18,9 +18,32 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 
   initEventListeners();
+  initViewportHeightSync();
   initTooltips();
   registerServiceWorker();
 });
+
+function initViewportHeightSync() {
+  const viewport = window.visualViewport;
+  const getHeight = () => viewport ? viewport.height : window.innerHeight;
+  const syncHeight = () => {
+    document.documentElement.style.setProperty("--app-height", `${Math.round(getHeight())}px`);
+  };
+  const syncAndKeepComposerVisible = () => {
+    syncHeight();
+    if (document.activeElement === DOM.chatInput) {
+      requestAnimationFrame(() => scrollToBottomSmart(true));
+    }
+  };
+
+  syncHeight();
+  window.addEventListener("resize", syncAndKeepComposerVisible);
+  window.addEventListener("orientationchange", syncAndKeepComposerVisible);
+  if (viewport) {
+    viewport.addEventListener("resize", syncAndKeepComposerVisible);
+    viewport.addEventListener("scroll", syncAndKeepComposerVisible);
+  }
+}
 
 function initEventListeners() {
   DOM.themeBtn.addEventListener("click", toggleTheme);
@@ -51,6 +74,12 @@ function initEventListeners() {
       e.preventDefault();
       if (!DOM.sendBtn.classList.contains("generating")) handleSend();
     }
+  });
+  DOM.chatInput.addEventListener("focus", () => {
+    requestAnimationFrame(() => scrollToBottomSmart(true));
+  });
+  DOM.chatInput.addEventListener("blur", () => {
+    requestAnimationFrame(() => scrollToBottomSmart());
   });
   DOM.sendBtn.addEventListener("click", () => {
     if (DOM.sendBtn.classList.contains("generating")) {

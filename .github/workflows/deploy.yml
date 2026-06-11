@@ -2,8 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -13,7 +12,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -25,11 +24,51 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Verify assets
+        run: |
+          echo "Checking required files exist..."
+          for file in index.html sw.js manifest.json styles.css app.js; do
+            if [ ! -f "$file" ]; then
+              echo "::error::Required file '$file' not found in repository root"
+              exit 1
+            fi
+            echo "  [ok] $file"
+          done
+          echo "All required assets verified."
+
+      - name: Validate HTML structure
+        run: |
+          echo "Validating index.html contains essential tags..."
+          ERRORS=0
+
+          grep -q 'name="viewport"' index.html || {
+            echo "::error::index.html is missing viewport meta tag"
+            ERRORS=$((ERRORS + 1))
+          }
+
+          grep -q 'rel="manifest"' index.html || {
+            echo "::error::index.html is missing manifest link tag"
+            ERRORS=$((ERRORS + 1))
+          }
+
+          grep -q 'serviceWorker\|sw\.js' index.html || {
+            echo "::warning::index.html may be missing service worker registration"
+          }
+
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "::error::HTML validation failed with $ERRORS error(s)"
+            exit 1
+          fi
+
+          echo "HTML structure validation passed."
+
       - name: Stamp service worker cache version with commit SHA
         run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
           grep -q "__BUILD_SHA__" sw.js || { echo "::error::__BUILD_SHA__ placeholder not found in sw.js"; exit 1; }
           sed -i "s/__BUILD_SHA__/${GITHUB_SHA}/g" sw.js
           echo "Stamped sw.js -> cosmic-chat-${GITHUB_SHA}"
+          echo "Short SHA: ${SHORT_SHA}"
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -42,3 +81,24 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Write job summary
+        if: always()
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          DEPLOY_URL="${{ steps.deployment.outputs.page_url }}"
+          TIMESTAMP="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## Deployment Summary
+
+          | Field       | Value                        |
+          |-------------|------------------------------|
+          | Status      | ${{ job.status }}            |
+          | Commit SHA  | \`${GITHUB_SHA}\`            |
+          | Short SHA   | \`${SHORT_SHA}\`             |
+          | Deploy URL  | ${DEPLOY_URL}                |
+          | Timestamp   | ${TIMESTAMP}                 |
+          | Branch      | \`${GITHUB_REF_NAME}\`       |
+          | Actor       | @${GITHUB_ACTOR}             |
+          EOF

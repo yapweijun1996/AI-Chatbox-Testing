@@ -248,3 +248,85 @@ async function handleSend() {
     updateStatus(true);
   }
 }
+
+// ─── Service Worker Registration & Update Handling ───────────────────────────
+
+let _reloading = false;
+
+navigator.serviceWorker?.addEventListener('controllerchange', () => {
+  if (_reloading) return;
+  _reloading = true;
+  window.location.reload();
+});
+
+function showUpdateToast(waitingSW) {
+  if (document.getElementById('sw-update-toast')) return;
+
+  const toast = document.createElement('div');
+  toast.id = 'sw-update-toast';
+  toast.textContent = 'New version available — tap to update';
+  Object.assign(toast.style, {
+    position:      'fixed',
+    bottom:        'max(24px, calc(24px + env(safe-area-inset-bottom, 0px)))',
+    left:          '50%',
+    transform:     'translateX(-50%)',
+    background:    'rgba(0,0,0,0.85)',
+    color:         '#fff',
+    borderRadius:  '24px',
+    padding:       '12px 20px',
+    fontSize:      '14px',
+    fontFamily:    'inherit',
+    fontWeight:    '500',
+    letterSpacing: '0.01em',
+    cursor:        'pointer',
+    zIndex:        '99999',
+    boxShadow:     '0 4px 16px rgba(0,0,0,0.35)',
+    whiteSpace:    'nowrap',
+    userSelect:    'none',
+    transition:    'opacity 0.3s ease',
+    opacity:       '1',
+  });
+
+  const dismiss = () => {
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 350);
+  };
+
+  toast.addEventListener('click', () => {
+    if (waitingSW) {
+      waitingSW.postMessage({ type: 'SKIP_WAITING' });
+    } else {
+      window.location.reload();
+    }
+    dismiss();
+  });
+
+  document.body.appendChild(toast);
+  setTimeout(dismiss, 30_000);
+}
+
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+
+  navigator.serviceWorker
+    .register('./sw.js')
+    .then((reg) => {
+      if (reg.waiting && navigator.serviceWorker.controller) {
+        showUpdateToast(reg.waiting);
+      }
+
+      reg.addEventListener('updatefound', () => {
+        const newSW = reg.installing;
+        if (!newSW) return;
+
+        newSW.addEventListener('statechange', () => {
+          if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdateToast(newSW);
+          }
+        });
+      });
+    })
+    .catch((err) => {
+      console.warn('[SW] Registration failed:', err);
+    });
+}

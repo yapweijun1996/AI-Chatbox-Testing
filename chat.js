@@ -15,15 +15,21 @@ function renderMessages(messages) {
   scrollToBottomSmart(true);
 }
 
+function renderActionButton(icon, labelKey, onClick) {
+  const label = getLocaleString(labelKey);
+  const safeLabel = escapeHTML(label);
+  return `<button class="action-btn" onclick="${onClick}" title="${safeLabel}" data-tooltip="${safeLabel}">${svgIcon(icon, 13)} ${safeLabel}</button>`;
+}
+
 function renderMessageActions(role, messageId) {
   const actions = document.createElement("div");
   actions.className = "message-actions";
 
-  const copyButton = `<button class="action-btn" onclick="copyBubbleContent(this, ${messageId})">${svgIcon("copy", 13)} Copy</button>`;
+  const copyButton = renderActionButton("copy", "actionCopy", `copyBubbleContent(this, ${messageId})`);
   if (role === "user") {
-    actions.innerHTML = `${copyButton}<button class="action-btn" onclick="editMessage(this, ${messageId})">${svgIcon("edit", 13)} Edit</button>`;
+    actions.innerHTML = `${copyButton}${renderActionButton("edit", "actionEdit", `editMessage(this, ${messageId})`)}`;
   } else if (role === "assistant") {
-    actions.innerHTML = `${copyButton}<button class="action-btn" onclick="regenerateMessage(this, ${messageId})">${svgIcon("regenerate", 13)} Regenerate</button>`;
+    actions.innerHTML = `${copyButton}${renderActionButton("regenerate", "actionRegenerate", `regenerateMessage(this, ${messageId})`)}`;
   } else {
     actions.innerHTML = copyButton;
   }
@@ -85,17 +91,26 @@ window.copyBubbleContent = async (btn, messageId) => {
   if (!msg) return;
 
   const originalHTML = btn.innerHTML;
+  const originalTitle = btn.getAttribute("data-tooltip") || "";
   try {
     await writeClipboardText(msg.content);
-    btn.innerHTML = `${svgIcon("copy", 13)} Copied`;
+    const copiedLabel = escapeHTML(getLocaleString("actionCopied"));
+    btn.innerHTML = `${svgIcon("copy", 13)} ${copiedLabel}`;
+    btn.title = copiedLabel;
+    btn.dataset.tooltip = copiedLabel;
     btn.style.color = "#34C759";
   } catch (err) {
     console.error("Unable to copy message: ", err);
-    btn.innerHTML = `${svgIcon("warning", 13)} Failed`;
+    const failedLabel = escapeHTML(getLocaleString("actionCopyFailed"));
+    btn.innerHTML = `${svgIcon("warning", 13)} ${failedLabel}`;
+    btn.title = failedLabel;
+    btn.dataset.tooltip = failedLabel;
     btn.style.color = "#FF453A";
   } finally {
     setTimeout(() => {
       btn.innerHTML = originalHTML;
+      btn.title = originalTitle;
+      btn.dataset.tooltip = originalTitle;
       btn.style.color = "";
     }, 1500);
   }

@@ -20,7 +20,12 @@ const TRANSLATIONS = {
     formLanguage: "UI Language (界面语言)",
     formReasoningEffort: "Reasoning Effort (o-series)",
     formSave: "Save Settings",
-    privacyWarning: "XOR Obfuscated & Encrypted. Locally Persisted via IndexedDB."
+    privacyWarning: "XOR Obfuscated & Encrypted. Locally Persisted via IndexedDB.",
+    actionCopy: "Copy",
+    actionCopied: "Copied",
+    actionCopyFailed: "Copy failed",
+    actionEdit: "Edit",
+    actionRegenerate: "Regenerate"
   },
   zh: {
     sidebarNewChat: "新建对话",
@@ -43,7 +48,12 @@ const TRANSLATIONS = {
     formLanguage: "UI Language (界面语言)",
     formReasoningEffort: "推理开销 (o系列模型)",
     formSave: "保存当前配置",
-    privacyWarning: "XOR 混淆与加密保护。本地通过 IndexedDB 安全存储。"
+    privacyWarning: "XOR 混淆与加密保护。本地通过 IndexedDB 安全存储。",
+    actionCopy: "\u590d\u5236",
+    actionCopied: "\u5df2\u590d\u5236",
+    actionCopyFailed: "\u590d\u5236\u5931\u8d25",
+    actionEdit: "\u7f16\u8f91",
+    actionRegenerate: "\u91cd\u65b0\u751f\u6210"
   },
   ms: {
     sidebarNewChat: "Sembang Baru",
@@ -66,7 +76,12 @@ const TRANSLATIONS = {
     formLanguage: "Bahasa UI (UI Language)",
     formReasoningEffort: "Usaha Penaakulan (o-series)",
     formSave: "Simpan Tetapan",
-    privacyWarning: "XOR Dikaburkan & Disulitkan. Disimpan secara tempatan melalui IndexedDB."
+    privacyWarning: "XOR Dikaburkan & Disulitkan. Disimpan secara tempatan melalui IndexedDB.",
+    actionCopy: "Salin",
+    actionCopied: "Disalin",
+    actionCopyFailed: "Gagal salin",
+    actionEdit: "Edit",
+    actionRegenerate: "Jana semula"
   },
   ja: {
     sidebarNewChat: "新規チャット",
@@ -89,7 +104,12 @@ const TRANSLATIONS = {
     formLanguage: "UI言語 (UI Language)",
     formReasoningEffort: "推論の労力 (oシリーズ)",
     formSave: "設定を保存",
-    privacyWarning: "XOR難読化＆暗号化。IndexedDBを介してローカルに保存されます。"
+    privacyWarning: "XOR難読化＆暗号化。IndexedDBを介してローカルに保存されます。",
+    actionCopy: "\u30b3\u30d4\u30fc",
+    actionCopied: "\u30b3\u30d4\u30fc\u6e08\u307f",
+    actionCopyFailed: "\u30b3\u30d4\u30fc\u5931\u6557",
+    actionEdit: "\u7de8\u96c6",
+    actionRegenerate: "\u518d\u751f\u6210"
   },
   vi: {
     sidebarNewChat: "Trò chuyện mới",
@@ -112,7 +132,12 @@ const TRANSLATIONS = {
     formLanguage: "Ngôn ngữ giao diện (UI Language)",
     formReasoningEffort: "Nỗ lực tư duy (dòng o)",
     formSave: "Lưu cài đặt",
-    privacyWarning: "XOR Mã hóa & Ẩn danh. Lưu trữ cục bộ qua IndexedDB."
+    privacyWarning: "XOR Mã hóa & Ẩn danh. Lưu trữ cục bộ qua IndexedDB.",
+    actionCopy: "Sao ch\u00e9p",
+    actionCopied: "\u0110\u00e3 sao ch\u00e9p",
+    actionCopyFailed: "Sao ch\u00e9p l\u1ed7i",
+    actionEdit: "Ch\u1ec9nh s\u1eeda",
+    actionRegenerate: "T\u1ea1o l\u1ea1i"
   }
 };
 

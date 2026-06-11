@@ -28,7 +28,8 @@ async function switchProviderTab(provider) {
 
 function getLocaleString(key) {
   const locale = localStorage.getItem("lastLocale") || getSystemLocale();
-  return (TRANSLATIONS[locale] || TRANSLATIONS.en)[key];
+  const strings = TRANSLATIONS[locale] || TRANSLATIONS.en;
+  return strings[key] || TRANSLATIONS.en[key] || key;
 }
 
 function updateStatus(connected) {

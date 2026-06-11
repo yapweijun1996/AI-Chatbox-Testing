@@ -87,7 +87,7 @@ async function triggerCompletionStream() {
     await loadSessions();
   } catch (err) {
     if (err.name === "AbortError") {
-      aiBubble.innerHTML += `<br><span style="color: #FF9500; font-size: 11px;">⚠️ Stream connection aborted by user.</span>`;
+      aiBubble.innerHTML += `<br><span style="color: #FF9500; font-size: 11px;">${svgIcon("warning", 12)} Stream connection aborted by user.</span>`;
       scrollToBottomSmart(true);
     } else {
       console.error("Direct API Streaming failed: ", err);

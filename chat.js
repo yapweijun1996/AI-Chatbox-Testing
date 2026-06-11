@@ -37,9 +37,9 @@ function appendMessageToDOM(role, content, performanceData = null, messageId = n
     const actions = document.createElement("div");
     actions.className = "message-actions";
     if (role === "user") {
-      actions.innerHTML = `<button class="action-btn" onclick="editMessage(this, ${messageId})">✏️ Edit</button>`;
+      actions.innerHTML = `<button class="action-btn" onclick="editMessage(this, ${messageId})">${svgIcon("edit", 13)} Edit</button>`;
     } else if (role === "assistant") {
-      actions.innerHTML = `<button class="action-btn" onclick="regenerateMessage(this, ${messageId})">🔄 Regenerate</button>`;
+      actions.innerHTML = `<button class="action-btn" onclick="regenerateMessage(this, ${messageId})">${svgIcon("regenerate", 13)} Regenerate</button>`;
     }
     item.appendChild(actions);
   }
@@ -94,7 +94,7 @@ async function handleSend() {
     await loadSessions();
   } catch (err) {
     if (err.name === "AbortError") {
-      aiBubble.innerHTML += `<br><span style="color: #FF9500; font-size: 11px;">⚠️ Stream connection aborted by user.</span>`;
+      aiBubble.innerHTML += `<br><span style="color: #FF9500; font-size: 11px;">${svgIcon("warning", 12)} Stream connection aborted by user.</span>`;
       scrollToBottomSmart(true);
     } else {
       console.error("Direct API Streaming failed: ", err);

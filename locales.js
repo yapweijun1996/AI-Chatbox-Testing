@@ -7,9 +7,9 @@ const TRANSLATIONS = {
     headerGenerating: "Generating...",
     welcomeTitle: "Welcome to Secure AI Chat",
     welcomeDesc: "All credentials are obfuscated and stored locally. Streams connect directly to providers with zero log retention.",
-    welcomeStep1Title: "🔑 Step 1: Configure Keys",
+    welcomeStep1Title: "Step 1: Configure Keys",
     welcomeStep1Desc: "Click here or the settings button to enter your API Key and Base URL.",
-    welcomeStep2Title: "💬 Step 2: Start Chatting",
+    welcomeStep2Title: "Step 2: Start Chatting",
     welcomeStep2Desc: "Type any query in the input bar below to initiate real-time streaming.",
     inputPlaceholder: "Type a message to AI assistant...",
     footerNote: "Data is sent directly to your configured provider. Obfuscated keys protect your privacy.",
@@ -20,7 +20,7 @@ const TRANSLATIONS = {
     formLanguage: "UI Language (界面语言)",
     formReasoningEffort: "Reasoning Effort (o-series)",
     formSave: "Save Settings",
-    privacyWarning: "🔒 XOR Obfuscated & Encrypted. Locally Persisted via IndexedDB."
+    privacyWarning: "XOR Obfuscated & Encrypted. Locally Persisted via IndexedDB."
   },
   zh: {
     sidebarNewChat: "新建对话",
@@ -30,9 +30,9 @@ const TRANSLATIONS = {
     headerGenerating: "正在生成回答...",
     welcomeTitle: "欢迎使用安全 AI 聊天",
     welcomeDesc: "所有凭据均已经过混淆并存储在本地。直连大模型，无任何云端日志保留。",
-    welcomeStep1Title: "🔑 步骤 1：配置密钥",
+    welcomeStep1Title: "步骤 1：配置密钥",
     welcomeStep1Desc: "点击此处或设置按钮，输入您的 API 密钥和基准 Base URL。",
-    welcomeStep2Title: "💬 步骤 2：发起对话",
+    welcomeStep2Title: "步骤 2：发起对话",
     welcomeStep2Desc: "在底部的输入框中输入您的任何问题即可发起流式输出。",
     inputPlaceholder: "输入任何问题开始与 AI 助手对话...",
     footerNote: "数据将直连您配置的接口商。本地混淆后的密钥可全面保障您的隐私。",
@@ -43,7 +43,7 @@ const TRANSLATIONS = {
     formLanguage: "UI Language (界面语言)",
     formReasoningEffort: "推理开销 (o系列模型)",
     formSave: "保存当前配置",
-    privacyWarning: "🔒 XOR 混淆与加密保护。本地通过 IndexedDB 安全存储。"
+    privacyWarning: "XOR 混淆与加密保护。本地通过 IndexedDB 安全存储。"
   },
   ms: {
     sidebarNewChat: "Sembang Baru",
@@ -53,9 +53,9 @@ const TRANSLATIONS = {
     headerGenerating: "Menjana jawapan...",
     welcomeTitle: "Selamat Datang ke Sembang AI Selamat",
     welcomeDesc: "Semua kelayakan dikaburkan dan disimpan secara tempatan. Sambungan terus ke penyedia tanpa simpanan log.",
-    welcomeStep1Title: "🔑 Langkah 1: Konfigurasi Kunci",
+    welcomeStep1Title: "Langkah 1: Konfigurasi Kunci",
     welcomeStep1Desc: "Klik di sini atau butang tetapan untuk memasukkan API Key dan Base URL.",
-    welcomeStep2Title: "💬 Langkah 2: Mula Berbual",
+    welcomeStep2Title: "Langkah 2: Mula Berbual",
     welcomeStep2Desc: "Taip sebarang pertanyaan dalam bar input di bawah untuk memulakan penstriman masa nyata.",
     inputPlaceholder: "Taip mesej kepada pembantu AI...",
     footerNote: "Data dihantar terus ke penyedia konfigurasi anda. Kunci yang dikaburkan melindungi privasi anda.",
@@ -66,7 +66,7 @@ const TRANSLATIONS = {
     formLanguage: "Bahasa UI (UI Language)",
     formReasoningEffort: "Usaha Penaakulan (o-series)",
     formSave: "Simpan Tetapan",
-    privacyWarning: "🔒 XOR Dikaburkan & Disulitkan. Disimpan secara tempatan melalui IndexedDB."
+    privacyWarning: "XOR Dikaburkan & Disulitkan. Disimpan secara tempatan melalui IndexedDB."
   },
   ja: {
     sidebarNewChat: "新規チャット",
@@ -76,9 +76,9 @@ const TRANSLATIONS = {
     headerGenerating: "生成中...",
     welcomeTitle: "セキュアAIチャットへようこそ",
     welcomeDesc: "すべての認証情報は難読化され、ローカルに保存されます。ログ保存ゼロでプロバイダーに直接接続します。",
-    welcomeStep1Title: "🔑 ステップ 1: キーの設定",
+    welcomeStep1Title: "ステップ 1: キーの設定",
     welcomeStep1Desc: "ここまたは設定ボタンをクリックして、APIキーとベースURLを入力します。",
-    welcomeStep2Title: "💬 ステップ 2: チャット開始",
+    welcomeStep2Title: "ステップ 2: チャット開始",
     welcomeStep2Desc: "リアルタイムのストリーミングを開始するには、下の入力バーに質問を入力します。",
     inputPlaceholder: "AIアシスタントにメッセージを入力...",
     footerNote: "データは設定されたプロバイダーに直接送信されます。難読化されたキーでプライバシーを保護します。",
@@ -89,7 +89,7 @@ const TRANSLATIONS = {
     formLanguage: "UI言語 (UI Language)",
     formReasoningEffort: "推論の労力 (oシリーズ)",
     formSave: "設定を保存",
-    privacyWarning: "🔒 XOR難読化＆暗号化。IndexedDBを介してローカルに保存されます。"
+    privacyWarning: "XOR難読化＆暗号化。IndexedDBを介してローカルに保存されます。"
   },
   vi: {
     sidebarNewChat: "Trò chuyện mới",
@@ -99,9 +99,9 @@ const TRANSLATIONS = {
     headerGenerating: "Đang tạo câu trả lời...",
     welcomeTitle: "Chào mừng đến với Trò chuyện AI bảo mật",
     welcomeDesc: "Tất cả thông tin đăng nhập được mã hóa và lưu trữ cục bộ. Kết nối trực tiếp đến nhà cung cấp và không lưu lại lịch sử.",
-    welcomeStep1Title: "🔑 Bước 1: Cấu hình Khóa",
+    welcomeStep1Title: "Bước 1: Cấu hình Khóa",
     welcomeStep1Desc: "Nhấp vào đây hoặc nút cài đặt để nhập Khóa API và URL cơ sở.",
-    welcomeStep2Title: "💬 Bước 2: Bắt đầu Trò chuyện",
+    welcomeStep2Title: "Bước 2: Bắt đầu Trò chuyện",
     welcomeStep2Desc: "Nhập bất kỳ câu hỏi nào vào thanh nhập bên dưới để bắt đầu truyền trực tiếp thời gian thực.",
     inputPlaceholder: "Nhập tin nhắn cho trợ lý AI...",
     footerNote: "Dữ liệu được gửi trực tiếp đến nhà cung cấp đã định cấu hình của bạn. Khóa ẩn bảo vệ quyền riêng tư của bạn.",
@@ -112,7 +112,7 @@ const TRANSLATIONS = {
     formLanguage: "Ngôn ngữ giao diện (UI Language)",
     formReasoningEffort: "Nỗ lực tư duy (dòng o)",
     formSave: "Lưu cài đặt",
-    privacyWarning: "🔒 XOR Mã hóa & Ẩn danh. Lưu trữ cục bộ qua IndexedDB."
+    privacyWarning: "XOR Mã hóa & Ẩn danh. Lưu trữ cục bộ qua IndexedDB."
   }
 };
 

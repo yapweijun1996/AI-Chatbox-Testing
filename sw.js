@@ -8,6 +8,7 @@ const CACHE_NAME = `cosmic-chat-${CACHE_VERSION}`;
 const ASSETS = [
   "./","./index.html","./styles.css","./widgets.css","./vendor/prism.css",
   "./crypto.js","./db-init.js","./db-settings.js","./db-sessions.js","./db-messages.js",
+  "./icons.js",
   "./vendor/prism.js","./locales.js","./sessions.js","./editor.js","./api.js",
   "./vendor/marked.js","./markdown.js","./telemetry.js","./theme.js","./tooltips.js",
   "./pwa.js","./state.js","./providers.js","./chat.js","./main.js",

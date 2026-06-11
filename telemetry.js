@@ -15,12 +15,12 @@ function renderPerformanceBadge(perf) {
 
   return `
     <div class="message-meta">
-      <span data-tooltip="🤖 [Model Name] The model that generated this response.">🤖 ${modelStr}</span>
-      <span data-tooltip="⏱️ [Connection Latency] The time elapsed from sending the request to establishing the connection and receiving the first byte. Lower means faster network response.">⏱️ Connection: ${fblStr}</span>
-      <span data-tooltip="⏳ [Time to First Token] The duration from initiating the request until the model generates its first character token. Measures model prefill and thinking time.">⏳ TTFT: ${ttftStr}</span>
-      <span data-tooltip="🏃 [Generation Speed] The average number of token units generated per second. Measures raw model inference and decoding throughput.">🏃 Speed: ${tpsStr} tps</span>
-      <span data-tooltip="💎 [Inter-Token Latency] The average duration between generating consecutive tokens. Lower values indicate a smoother and more fluid reading pace.">💎 ITL: ${itlStr}</span>
-      <span data-tooltip="⏱️ [End-to-End Duration] The total round-trip time from clicking send until the stream is completely closed.">⏱️ Total: ${e2eStr}</span>
+      <span data-tooltip="[Model Name] The model that generated this response.">${svgIcon("cpu", 11)} ${modelStr}</span>
+      <span data-tooltip="[Connection Latency] The time elapsed from sending the request to establishing the connection and receiving the first byte. Lower means faster network response.">${svgIcon("activity", 11)} Connection: ${fblStr}</span>
+      <span data-tooltip="[Time to First Token] The duration from initiating the request until the model generates its first character token. Measures model prefill and thinking time.">${svgIcon("clock", 11)} TTFT: ${ttftStr}</span>
+      <span data-tooltip="[Generation Speed] The average number of token units generated per second. Measures raw model inference and decoding throughput.">${svgIcon("speed", 11)} Speed: ${tpsStr} tps</span>
+      <span data-tooltip="[Inter-Token Latency] The average duration between generating consecutive tokens. Lower values indicate a smoother and more fluid reading pace.">${svgIcon("itl", 11)} ITL: ${itlStr}</span>
+      <span data-tooltip="[End-to-End Duration] The total round-trip time from clicking send until the stream is completely closed.">${svgIcon("timer", 11)} Total: ${e2eStr}</span>
     </div>
   `;
 }

@@ -43,6 +43,13 @@
 .form-group input:focus { border-color: var(--accent-color); }
 .privacy-warning { font-size: 10px; color: var(--text-secondary); text-align: center; margin-top: auto; }
 
+/* Inline icon alignment for SVG icons embedded in text */
+.welcome-card h3 .icon-step { color: var(--accent-color); }
+.welcome-card h3 .icon-svg { vertical-align: -2px; margin-right: 6px; }
+.privacy-warning .icon-svg { vertical-align: -1px; margin-right: 4px; }
+.message-meta .icon-svg { vertical-align: -2px; margin-right: 3px; }
+.action-btn .icon-svg { vertical-align: -2px; }
+
 /* Micro Telemetry Performance Badge Style */
 .message-meta {
   font-size: 10px;

@@ -13,23 +13,32 @@ function escapeHTML(str) {
   }[m]));
 }
 
+// Restrict URLs to safe schemes — blocks javascript:, data:, vbscript:, file:
+function sanitizeUrl(url) {
+  if (!url) return "#";
+  const trimmed = String(url).trim();
+  if (/^(?:javascript|data|vbscript|file):/i.test(trimmed)) return "#";
+  return trimmed;
+}
+
 // Set up custom Marked.js renderer for our specialized components
 if (window.marked) {
   const renderer = {
     code({ text, lang }) {
-      const languageClass = `language-${lang || 'plaintext'}`;
-      return `
-        <pre class="${languageClass}">
-          <div class="code-block-header">
-            <span>${lang || "code"}</span>
-            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-          </div>
-          <code class="${languageClass}">${text.trim()}</code>
-        </pre>
-      `;
+      const language = (lang || "plaintext").replace(/[^a-z0-9+#.-]/gi, "");
+      const label = lang ? escapeHTML(lang) : "code";
+      const languageClass = `language-${language}`;
+      // Header sits OUTSIDE <pre> so its indentation is never rendered as code.
+      // `text` is already HTML-escaped by parseMarkdown(), so it is inserted as-is.
+      const body = text.replace(/\n+$/, "");
+      return `<div class="code-block"><div class="code-block-header"><span>${label}</span>` +
+        `<button class="copy-btn" onclick="copyCode(this)">Copy</button></div>` +
+        `<pre class="${languageClass}"><code class="${languageClass}">${body}</code></pre></div>`;
     },
     link({ href, title, text }) {
-      return `<a href="${href}" target="_blank" class="chat-link"${title ? ` title="${title}"` : ""}>${text}</a>`;
+      const safeHref = sanitizeUrl(href);
+      const titleAttr = title ? ` title="${title}"` : "";
+      return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer" class="chat-link"${titleAttr}>${text}</a>`;
     }
   };
   marked.use({ renderer, gfm: true, breaks: true });
@@ -74,7 +83,7 @@ function renderPerformanceBadge(perf) {
 
 // Clipboard copier helper
 window.copyCode = (btn) => {
-  const codeEl = btn.closest("pre").querySelector("code");
+  const codeEl = btn.closest(".code-block").querySelector("code");
   navigator.clipboard.writeText(codeEl.textContent).then(() => {
     btn.textContent = "Copied";
     btn.style.color = "#34C759";
@@ -132,6 +141,46 @@ function initTooltips() {
   });
 }
 
+function showUpdateToast(waitingSW) {
+  if (document.getElementById("sw-update-toast")) return;
+
+  const toast = document.createElement("div");
+  toast.id = "sw-update-toast";
+  toast.textContent = "New version available — tap to update";
+  Object.assign(toast.style, {
+    position: "fixed",
+    bottom: "max(24px, calc(24px + env(safe-area-inset-bottom, 0px)))",
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: "rgba(0,0,0,0.85)",
+    color: "#fff",
+    borderRadius: "24px",
+    padding: "12px 20px",
+    fontSize: "14px",
+    fontFamily: "inherit",
+    fontWeight: "500",
+    cursor: "pointer",
+    zIndex: "99999",
+    boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
+    whiteSpace: "nowrap",
+    userSelect: "none",
+    transition: "opacity 0.3s ease"
+  });
+
+  const dismiss = () => {
+    toast.style.opacity = "0";
+    setTimeout(() => toast.remove(), 350);
+  };
+  toast.addEventListener("click", () => {
+    if (waitingSW) waitingSW.postMessage({ type: "SKIP_WAITING" });
+    else window.location.reload();
+    dismiss();
+  });
+
+  document.body.appendChild(toast);
+  setTimeout(dismiss, 30000);
+}
+
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
 
@@ -149,7 +198,20 @@ function registerServiceWorker() {
 
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./sw.js")
-      .then((reg) => console.log("ServiceWorker registered successfully with scope: ", reg.scope))
+      .then((reg) => {
+        // A worker installed on a prior visit is already waiting — offer to update.
+        if (reg.waiting && navigator.serviceWorker.controller) showUpdateToast(reg.waiting);
+        // A new worker starts installing while this page is open.
+        reg.addEventListener("updatefound", () => {
+          const newSW = reg.installing;
+          if (!newSW) return;
+          newSW.addEventListener("statechange", () => {
+            if (newSW.state === "installed" && navigator.serviceWorker.controller) {
+              showUpdateToast(newSW);
+            }
+          });
+        });
+      })
       .catch((err) => console.warn("ServiceWorker registration failed: ", err));
   });
 }

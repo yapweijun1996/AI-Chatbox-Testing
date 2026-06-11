@@ -15,7 +15,7 @@
 }
 .settings-modal-overlay.open { display: flex; }
 .settings-modal-content {
-  width: 400px;
+  width: min(400px, 92vw);
   max-height: 85vh;
   background: var(--sidebar-bg);
   border: 1px solid var(--glass-border);
@@ -61,11 +61,17 @@
   opacity: 0.9;
 }
 
-/* Icons & Pre formatting */
-.message-bubble pre { background: rgba(0,0,0,0.03); padding: 12px; border-radius: 8px; font-family: monospace; font-size: 11px; overflow-x: auto; margin: 8px 0; }
+/* Fenced code blocks: header bar + scrollable body */
+.code-block { margin: 10px 0; border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden; }
+.code-block-header { display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: var(--text-secondary); padding: 6px 12px; background: var(--message-ai-bg); border-bottom: 1px solid var(--border-subtle); }
+.message-bubble pre { background: rgba(0,0,0,0.03); padding: 12px; border-radius: 8px; font-family: monospace; font-size: 12.5px; line-height: 1.5; overflow-x: auto; margin: 8px 0; }
+/* Block code inside <pre> must not inherit the inline-code chip styling */
+.message-bubble pre code { background: transparent; padding: 0; border-radius: 0; font-size: inherit; }
+.code-block pre { margin: 0; border: none; border-radius: 0; }
+/* Inline code */
 .message-bubble code { font-family: monospace; background: rgba(0,0,0,0.03); padding: 2px 4px; border-radius: 4px; font-size: 90%; }
-.code-block-header { display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: var(--text-secondary); margin-bottom: 6px; }
-.copy-btn { background: rgba(0,0,0,0.03); border: none; padding: 2px 6px; border-radius: 4px; font-size: 9px; cursor: pointer; }
+.copy-btn { background: rgba(0,0,0,0.06); border: none; padding: 2px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; color: var(--text-secondary); transition: background 0.15s; }
+.copy-btn:hover { background: rgba(0,0,0,0.12); }
 
 /* Mouse Following Custom Tooltip */
 .custom-tooltip {

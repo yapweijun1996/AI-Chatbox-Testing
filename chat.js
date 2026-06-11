@@ -15,6 +15,27 @@ function renderMessages(messages) {
   scrollToBottomSmart(true);
 }
 
+function renderMessageActions(role, messageId) {
+  const actions = document.createElement("div");
+  actions.className = "message-actions";
+
+  const copyButton = `<button class="action-btn" onclick="copyBubbleContent(this, ${messageId})">${svgIcon("copy", 13)} Copy</button>`;
+  if (role === "user") {
+    actions.innerHTML = `${copyButton}<button class="action-btn" onclick="editMessage(this, ${messageId})">${svgIcon("edit", 13)} Edit</button>`;
+  } else if (role === "assistant") {
+    actions.innerHTML = `${copyButton}<button class="action-btn" onclick="regenerateMessage(this, ${messageId})">${svgIcon("regenerate", 13)} Regenerate</button>`;
+  } else {
+    actions.innerHTML = copyButton;
+  }
+
+  return actions;
+}
+
+function attachMessageActions(item, role, messageId) {
+  if (!messageId || item.querySelector(".message-actions")) return;
+  item.appendChild(renderMessageActions(role, messageId));
+}
+
 function appendMessageToDOM(role, content, performanceData = null, messageId = null) {
   const item = document.createElement("div");
   item.className = `message-item ${role}`;
@@ -34,19 +55,51 @@ function appendMessageToDOM(role, content, performanceData = null, messageId = n
   item.appendChild(bubble);
 
   if (messageId && content !== "Thinking...") {
-    const actions = document.createElement("div");
-    actions.className = "message-actions";
-    if (role === "user") {
-      actions.innerHTML = `<button class="action-btn" onclick="editMessage(this, ${messageId})">${svgIcon("edit", 13)} Edit</button>`;
-    } else if (role === "assistant") {
-      actions.innerHTML = `<button class="action-btn" onclick="regenerateMessage(this, ${messageId})">${svgIcon("regenerate", 13)} Regenerate</button>`;
-    }
-    item.appendChild(actions);
+    attachMessageActions(item, role, messageId);
   }
 
   DOM.messagesList.appendChild(item);
   return bubble;
 }
+
+async function writeClipboardText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.top = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  document.body.removeChild(textarea);
+  if (!copied) throw new Error("Copy command failed");
+}
+
+window.copyBubbleContent = async (btn, messageId) => {
+  const msg = await getStoreMessage(messageId);
+  if (!msg) return;
+
+  const originalHTML = btn.innerHTML;
+  try {
+    await writeClipboardText(msg.content);
+    btn.innerHTML = `${svgIcon("copy", 13)} Copied`;
+    btn.style.color = "#34C759";
+  } catch (err) {
+    console.error("Unable to copy message: ", err);
+    btn.innerHTML = `${svgIcon("warning", 13)} Failed`;
+    btn.style.color = "#FF453A";
+  } finally {
+    setTimeout(() => {
+      btn.innerHTML = originalHTML;
+      btn.style.color = "";
+    }, 1500);
+  }
+};
 
 function shouldScroll() {
   const distanceToBottom = DOM.chatViewport.scrollHeight - DOM.chatViewport.scrollTop - DOM.chatViewport.clientHeight;
@@ -90,7 +143,8 @@ async function handleSend() {
     aiBubble.innerHTML += renderPerformanceBadge(perfData);
     if (window.Prism) Prism.highlightAllUnder(aiBubble);
     scrollToBottomSmart();
-    await addMessage(activeSessionId, "assistant", perfData.fullText, perfData);
+    const assistantMsg = await addMessage(activeSessionId, "assistant", perfData.fullText, perfData);
+    attachMessageActions(aiBubble.closest(".message-item"), "assistant", assistantMsg.id);
     await loadSessions();
   } catch (err) {
     if (err.name === "AbortError") {

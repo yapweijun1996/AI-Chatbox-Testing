@@ -83,7 +83,8 @@ async function triggerCompletionStream() {
     aiBubble.innerHTML += renderPerformanceBadge(perfData);
     if (window.Prism) Prism.highlightAllUnder(aiBubble);
     scrollToBottomSmart();
-    await addMessage(activeSessionId, "assistant", perfData.fullText, perfData);
+    const assistantMsg = await addMessage(activeSessionId, "assistant", perfData.fullText, perfData);
+    attachMessageActions(aiBubble.closest(".message-item"), "assistant", assistantMsg.id);
     await loadSessions();
   } catch (err) {
     if (err.name === "AbortError") {

@@ -488,6 +488,13 @@ body {
     }
   }
 
+  @supports (-webkit-touch-callout: none) {
+    .sidebar {
+      height: -webkit-fill-available;
+      min-height: -webkit-fill-available;
+    }
+  }
+
   .sidebar.collapsed {
     transform: translateX(-260px);
     width: 260px;

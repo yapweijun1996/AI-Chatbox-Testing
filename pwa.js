@@ -13,7 +13,7 @@ function showUpdateToast(waitingSW) {
   toast.textContent = "New version available — tap to update";
   Object.assign(toast.style, {
     position: "fixed",
-    bottom: "max(24px, calc(24px + env(safe-area-inset-bottom, 0px)))",
+    bottom: "max(24px, env(safe-area-inset-bottom, 0px))",
     left: "50%",
     transform: "translateX(-50%)",
     background: "rgba(0,0,0,0.85)",

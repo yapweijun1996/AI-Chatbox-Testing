@@ -4,7 +4,7 @@ This document outlines the detailed system specifications, security paradigms, n
 
 ---
 
-## 1. BYOK Security & Obfuscation Layer (`crypto.js`, `db-init.js` & `db-operations.js`)
+## 1. BYOK Security & Obfuscation Layer (`crypto.js`, `db-init.js` & `db-settings.js`)
 
 Cosmic Pixel employs a strict **Bring Your Own Key (BYOK)** model. Credentials never touch intermediate servers and are fully contained in the browser.
 
@@ -18,7 +18,7 @@ Cosmic Pixel employs a strict **Bring Your Own Key (BYOK)** model. Credentials n
 
 ---
 
-## 2. IndexedDB Schema Architecture (`db-init.js` & `db-operations.js`)
+## 2. IndexedDB Schema Architecture (`db-init.js`, `db-settings.js`, `db-sessions.js` & `db-messages.js`)
 
 The client persistence layer leverages standard asynchronous IndexedDB object stores.
 
@@ -34,7 +34,7 @@ The client persistence layer leverages standard asynchronous IndexedDB object st
 
 ---
 
-## 3. SSE Stream Decoder (`api.js`, `app.js` & `renderer.js`)
+## 3. SSE Stream Decoder (`api.js`, `chat.js` & `markdown.js`)
 
 We stream text generation in real-time utilizing **Server-Sent Events (SSE)**.
 
@@ -52,7 +52,7 @@ Cosmic Pixel intentionally rejects the default HTML5 `EventSource` API in favor 
 
 ---
 
-## 4. High-Resolution Telemetry Metrics (`api.js` & `renderer.js`)
+## 4. High-Resolution Telemetry Metrics (`api.js` & `telemetry.js`)
 
 A custom telemetry engine measures millisecond-level network connection latency and model inference performance.
 
@@ -73,7 +73,7 @@ A custom telemetry engine measures millisecond-level network connection latency 
 
 Compliant with W3C 2026 progressive web standards.
 
-- **Caching Lifecycle (SHA-versioned)**: Pre-caches the static shell (`index.html`, `styles.css`, `widgets.css`, `crypto.js`, `db-init.js`, `db-operations.js`, `locales.js`, `sessions.js`, `editor.js`, `api.js`, `renderer.js`, `app.js`, `manifest.json`, `icon.svg`, plus the `vendor/` assets — Prism and Marked) using a Stale-While-Revalidate pattern. The cache name (`cosmic-chat-<commit-sha>`) is stamped from the git commit SHA at deploy time, so every deploy invalidates the previous cache; on activation the worker deletes stale caches, claims open clients, and the page auto-reloads onto the new build.
+- **Caching Lifecycle (SHA-versioned)**: Pre-caches the static shell (`index.html`, `styles.css`, `widgets.css`, the crypto/IndexedDB layer — `crypto.js`, `db-init.js`, `db-settings.js`, `db-sessions.js`, `db-messages.js` — the i18n/feature scripts `locales.js`, `sessions.js`, `editor.js`, `api.js`, the rendering/UI helpers `markdown.js`, `telemetry.js`, `theme.js`, `tooltips.js`, `pwa.js`, the app scripts `state.js`, `providers.js`, `chat.js`, `main.js`, plus `manifest.json`, `icon.svg`, and the `vendor/` assets — Prism and Marked) using a Stale-While-Revalidate pattern. The cache name (`cosmic-chat-<commit-sha>`) is stamped from the git commit SHA at deploy time, so every deploy invalidates the previous cache; on activation the worker deletes stale caches, claims open clients, and the page auto-reloads onto the new build.
 - **Bypass Filters**: Ignore non-GET requests or requests destined for external hosts, ensuring real-time Server-Sent Events (SSE) streaming connections bypass caching completely.
 
 ---
@@ -109,7 +109,7 @@ Cosmic Pixel is designed to behave as a native-quality experience on both iOS an
 
 ---
 
-## 7. PWA Update & Force-Reload Flow (`sw.js` & `app.js`)
+## 7. PWA Update & Force-Reload Flow (`sw.js` & `pwa.js`)
 
 Cosmic Pixel uses an active update notification pattern so users always run the latest deployed build without needing to manually clear their browser cache.
 
@@ -122,8 +122,8 @@ Cosmic Pixel uses an active update notification pattern so users always run the 
 - `self.clients.claim()` is called so the newly activated worker immediately controls all open tabs, including those that were already loaded under the previous worker.
 - After claiming clients, the worker broadcasts a `{ type: 'SW_UPDATED' }` `postMessage` to all connected clients, signaling that a new build is live.
 
-### 7.3 Update Detection in `app.js`
-- On page load, `app.js` registers the service worker and attaches a `updatefound` event listener to the `ServiceWorkerRegistration` object.
+### 7.3 Update Detection in `pwa.js`
+- On page load, `pwa.js` registers the service worker and attaches a `updatefound` event listener to the `ServiceWorkerRegistration` object.
 - When `updatefound` fires, the app obtains a reference to the `installing` worker and listens for its `statechange` event.
 - Once the installing worker transitions to the `installed` state (meaning it is waiting and ready), the app displays a non-blocking **update toast** notification to the user.
 
@@ -150,7 +150,7 @@ Cosmic Pixel uses GitHub Actions for fully automated, zero-downtime deployments 
 - The workflow uses `concurrency: cancel-in-progress: true` scoped to the deploy group. If a new push arrives while a previous deploy is still running, the in-progress job is cancelled and replaced by the newer one. This is safe for a static site deployment and avoids wasting CI minutes on superseded builds during rapid iteration.
 
 ### 8.3 Asset Verification Step
-- Before uploading to GitHub Pages, a dedicated verify step checks that all critical asset files exist in the repository (`index.html`, `sw.js`, `manifest.json`, `styles.css`, `app.js`). If any file is missing the workflow fails fast with a clear error, preventing a broken shell from being deployed.
+- Before uploading to GitHub Pages, a dedicated verify step checks that all critical asset files exist in the repository (`index.html`, `sw.js`, `manifest.json`, `styles.css`, `state.js`, `main.js`). If any file is missing the workflow fails fast with a clear error, preventing a broken shell from being deployed.
 
 ### 8.4 Build SHA Stamp
 - The workflow performs a string replacement in `sw.js`, substituting the `__BUILD_SHA__` placeholder token with the value of `$GITHUB_SHA` (the full 40-character commit SHA of the triggering push).

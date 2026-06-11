@@ -7,9 +7,11 @@ const CACHE_NAME = `cosmic-chat-${CACHE_VERSION}`;
 // All static assets that should be pre-cached on install.
 const ASSETS = [
   "./","./index.html","./styles.css","./widgets.css","./vendor/prism.css",
-  "./db-init.js","./db-operations.js","./crypto.js","./vendor/prism.js",
-  "./vendor/marked.js","./locales.js","./sessions.js","./editor.js",
-  "./api.js","./renderer.js","./app.js","./manifest.json","./icon.svg"
+  "./crypto.js","./db-init.js","./db-settings.js","./db-sessions.js","./db-messages.js",
+  "./vendor/prism.js","./locales.js","./sessions.js","./editor.js","./api.js",
+  "./vendor/marked.js","./markdown.js","./telemetry.js","./theme.js","./tooltips.js",
+  "./pwa.js","./state.js","./providers.js","./chat.js","./main.js",
+  "./manifest.json","./icon.svg"
 ];
 
 // ─── Install ────────────────────────────────────────────────────────────────

@@ -52,12 +52,21 @@ On each deploy the workflow stamps the service worker's cache name with the comm
 - `styles.css`: Pure responsive native CSS containing variables, dark/light themes, and custom animation curves.
 - `widgets.css`: Consolidated micro-telemetry performance metrics, pulsing thinking indicator dots, custom mouse-following tooltips, and settings overlay modals.
 - `db-init.js`: Opens the `CosmicPixelDB` IndexedDB database, defines the `sessions`/`messages`/`settings` object stores, and provides the in-memory fallback used when IndexedDB is unavailable.
-- `db-operations.js`: Promise-based CRUD for sessions, messages, and settings, including cascading session deletes.
+- `db-settings.js`: Promise-based read/write of per-provider BYOK settings.
+- `db-sessions.js`: Promise-based CRUD for sessions, including cascading message deletes and title rename.
+- `db-messages.js`: Promise-based CRUD for messages (add, fetch, edit, truncate-from).
 - `crypto.js`: Base64 and XOR dynamic obfuscator for client-side BYOK key sanitization.
 - `api.js`: Decoupled Server-Sent Events (SSE) stream client with full `AbortSignal` cancellation support.
-- `renderer.js`: Markdown rendering via the bundled **Marked.js** (custom code-block and link renderers, GFM), HTML escaping, telemetry badge builders, and theme/tooltip/service-worker helpers.
+- `markdown.js`: Markdown rendering via the bundled **Marked.js** (custom code-block and link renderers, GFM), HTML escaping, and URL sanitization.
+- `telemetry.js`: Builds the interactive performance-metrics badge row for assistant messages.
+- `theme.js`: Light/dark theme toggle, persisted to localStorage.
+- `tooltips.js`: Mouse-following tooltip engine for `[data-tooltip]` elements.
+- `pwa.js`: Service-worker registration, deploy auto-reload, and the "update available" toast.
 - `sw.js`: PWA service worker that pre-caches the static shell; its cache name is stamped with the deploy commit SHA, so a new deploy busts the cache and auto-refreshes open tabs.
-- `app.js`: Application bootstrap and orchestration — global state, DOM wiring, provider-tab switching, the send/stream loop, and message rendering.
+- `state.js`: Shared global state, constants, and the cached `DOM` element map.
+- `providers.js`: Provider-tab switching, connection status, and the settings save form.
+- `chat.js`: Message rendering and the send/stream pipeline.
+- `main.js`: Application bootstrap and global event wiring (loaded last).
 - `sessions.js`: Sidebar session list — rendering, selection, delete (with confirm), and double-click rename.
 - `editor.js`: In-place editing of a sent message ("Save & Resubmit") and regeneration of an assistant reply.
 - `locales.js`: UI translation strings for English, Mandarin, Malay, Japanese, and Vietnamese.

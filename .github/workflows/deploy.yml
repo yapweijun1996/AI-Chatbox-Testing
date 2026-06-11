@@ -27,7 +27,7 @@ jobs:
       - name: Verify assets
         run: |
           echo "Checking required files exist..."
-          for file in index.html sw.js manifest.json styles.css app.js; do
+          for file in index.html sw.js manifest.json styles.css state.js main.js; do
             if [ ! -f "$file" ]; then
               echo "::error::Required file '$file' not found in repository root"
               exit 1

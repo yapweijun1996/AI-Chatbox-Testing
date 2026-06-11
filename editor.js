@@ -5,19 +5,39 @@
 window.editMessage = (btn, messageId) => {
   const item = btn.closest(".message-item");
   const bubble = item.querySelector(".message-bubble");
-  const originalText = bubble.querySelector("p") ? bubble.innerText : bubble.textContent;
-  
+
   bubble.innerHTML = `
-    <textarea class="session-rename-input" style="width: 100%; height: 80px; resize: vertical; padding: 8px;" id="edit-area-${messageId}"></textarea>
-    <div style="margin-top: 8px; display: flex; gap: 8px; justify-content: flex-end;">
-      <button class="btn" style="padding: 4px 8px; font-size: 11px; font-weight: 500;" onclick="cancelEditMessage()">Cancel</button>
-      <button class="btn btn-primary" style="padding: 4px 8px; font-size: 11px;" onclick="saveEditMessage(${messageId})">Save & Resubmit</button>
+    <div class="message-edit-form">
+      <span class="message-edit-label">Editing message</span>
+      <textarea class="message-edit-textarea" id="edit-area-${messageId}" rows="1"></textarea>
+      <div class="message-edit-actions">
+        <span class="message-edit-hint">Esc to cancel · ⌘↵ to save</span>
+        <button class="message-edit-cancel" onclick="cancelEditMessage()">Cancel</button>
+        <button class="message-edit-save" id="edit-save-${messageId}" onclick="saveEditMessage(${messageId})">Save &amp; Resubmit</button>
+      </div>
     </div>
   `;
-  
+
   const textarea = document.getElementById(`edit-area-${messageId}`);
+  const saveBtn = document.getElementById(`edit-save-${messageId}`);
+
+  function autoResize() {
+    textarea.style.height = "auto";
+    textarea.style.height = Math.min(textarea.scrollHeight, 320) + "px";
+    saveBtn.disabled = textarea.value.trim() === "";
+  }
+
+  textarea.addEventListener("input", autoResize);
+
+  textarea.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { e.preventDefault(); cancelEditMessage(); }
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveEditMessage(messageId); }
+  });
+
   getStoreMessage(messageId).then(msg => {
-    textarea.value = msg ? msg.content : originalText;
+    textarea.value = msg ? msg.content : "";
+    autoResize();
+    textarea.select();
     textarea.focus();
   });
 };

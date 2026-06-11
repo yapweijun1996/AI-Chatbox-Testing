@@ -245,26 +245,34 @@
 /* Edit & Regenerate Hover Actions */
 .message-item {
   position: relative;
-  display: flex;
-  flex-direction: column;
 }
 .message-actions {
   display: flex;
   gap: 6px;
-  margin-top: 4px;
+  max-height: 0;
+  margin-top: 0;
   padding: 0 16px;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  overflow: hidden;
+  transition: opacity 0.2s ease, max-height 0.2s ease, margin-top 0.2s ease;
 }
 .message-item.user .message-actions {
+  align-self: flex-end;
   justify-content: flex-end;
 }
+.message-item.assistant .message-actions {
+  align-self: flex-start;
+}
 .message-item:hover .message-actions {
+  max-height: 36px;
+  margin-top: 6px;
   opacity: 1;
 }
 /* Touch devices: always show actions so they're discoverable */
 @media (hover: none) {
   .message-actions {
+    max-height: 36px;
+    margin-top: 6px;
     opacity: 0.7;
   }
 }

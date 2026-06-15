@@ -16,21 +16,19 @@ const ASSETS = [
 ];
 
 // ─── Install ────────────────────────────────────────────────────────────────
-// Pre-cache all known assets, then immediately take over any open pages
-// (skipWaiting) so the new SW becomes active without waiting for tabs to close.
+// Pre-cache all known assets. The worker waits until the page explicitly asks
+// it to activate, so users can choose when to update.
 self.addEventListener("install", (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(ASSETS))
-      .then(() => self.skipWaiting())
   );
 });
 
 // ─── Activate ───────────────────────────────────────────────────────────────
 // 1. Delete every cache that does not match the current CACHE_NAME (old versions).
 // 2. Claim all open clients so this SW controls them immediately.
-// 3. Broadcast SW_UPDATED to every client so the app can show an update toast
-//    or trigger an automatic reload.
+// 3. Broadcast SW_UPDATED to every client after an accepted update activates.
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys()

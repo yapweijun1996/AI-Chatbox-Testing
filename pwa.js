@@ -1,16 +1,19 @@
 /**
  * PWA service-worker registration & update flow.
- * Single source of truth: registers ./sw.js, auto-reloads on a new deploy
- * (guarded against first-install and in-flight streaming), and surfaces an
- * "update available" toast that triggers SKIP_WAITING.
+ * Registers ./sw.js and shows an explicit update prompt. The new service
+ * worker activates only after the user chooses to update.
  */
 
 function showUpdateToast(waitingSW) {
-  if (document.getElementById("sw-update-toast")) return;
+  if (!waitingSW || document.getElementById("sw-update-toast")) return;
 
   const toast = document.createElement("div");
   toast.id = "sw-update-toast";
-  toast.textContent = "New version available — tap to update";
+  toast.innerHTML = `
+    <span id="sw-update-message">New version detected.</span>
+    <button type="button" id="sw-update-now">Update now</button>
+    <button type="button" id="sw-update-later">Later</button>
+  `;
   Object.assign(toast.style, {
     position: "fixed",
     bottom: "max(24px, env(safe-area-inset-bottom, 0px))",
@@ -18,44 +21,67 @@ function showUpdateToast(waitingSW) {
     transform: "translateX(-50%)",
     background: "rgba(0,0,0,0.85)",
     color: "#fff",
-    borderRadius: "24px",
-    padding: "12px 20px",
+    borderRadius: "14px",
+    padding: "10px 12px",
     fontSize: "14px",
     fontFamily: "inherit",
     fontWeight: "500",
-    cursor: "pointer",
     zIndex: "99999",
     boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
-    whiteSpace: "nowrap",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    maxWidth: "calc(100vw - 32px)",
     userSelect: "none",
     transition: "opacity 0.3s ease"
+  });
+
+  toast.querySelectorAll("button").forEach((btn) => {
+    Object.assign(btn.style, {
+      border: "1px solid rgba(255,255,255,0.25)",
+      borderRadius: "8px",
+      background: btn.id === "sw-update-now" ? "#fff" : "transparent",
+      color: btn.id === "sw-update-now" ? "#111" : "#fff",
+      cursor: "pointer",
+      font: "inherit",
+      fontSize: "12px",
+      padding: "6px 9px",
+      whiteSpace: "nowrap"
+    });
   });
 
   const dismiss = () => {
     toast.style.opacity = "0";
     setTimeout(() => toast.remove(), 350);
   };
-  toast.addEventListener("click", () => {
-    if (waitingSW) waitingSW.postMessage({ type: "SKIP_WAITING" });
-    else window.location.reload();
+
+  toast.querySelector("#sw-update-now").addEventListener("click", () => {
+    if (window.activeAbortController) {
+      toast.querySelector("#sw-update-message").textContent = "Finish the current response before updating.";
+      return;
+    }
+    window.__swUpdateRequested = true;
+    waitingSW.postMessage({ type: "SKIP_WAITING" });
     dismiss();
   });
+  toast.querySelector("#sw-update-later").addEventListener("click", dismiss);
 
   document.body.appendChild(toast);
-  setTimeout(dismiss, 30000);
 }
 
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
 
-  // Auto-reload open tabs once a new service worker takes control (i.e. a new deploy).
-  // Guarded so it never fires on the first-ever install, never loops, and never
-  // interrupts an in-flight response (not persisted until the stream completes).
   let hadController = !!navigator.serviceWorker.controller;
   let reloading = false;
+  window.__swUpdateRequested = false;
+
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (reloading || !hadController) { hadController = true; return; }
-    if (window.activeAbortController) return; // streaming — reload on a later update check instead
+    if (reloading || !hadController) {
+      hadController = true;
+      return;
+    }
+    if (!window.__swUpdateRequested || window.activeAbortController) return;
     reloading = true;
     window.location.reload();
   });
@@ -63,9 +89,8 @@ function registerServiceWorker() {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./sw.js")
       .then((reg) => {
-        // A worker installed on a prior visit is already waiting — offer to update.
         if (reg.waiting && navigator.serviceWorker.controller) showUpdateToast(reg.waiting);
-        // A new worker starts installing while this page is open.
+
         reg.addEventListener("updatefound", () => {
           const newSW = reg.installing;
           if (!newSW) return;
@@ -74,6 +99,10 @@ function registerServiceWorker() {
               showUpdateToast(newSW);
             }
           });
+        });
+
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") reg.update();
         });
       })
       .catch((err) => console.warn("ServiceWorker registration failed: ", err));

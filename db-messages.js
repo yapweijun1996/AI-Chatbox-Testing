@@ -60,14 +60,15 @@ function updateMessageContent(msgId, newContent) {
   });
 }
 
-function addMessage(sessionId, role, content, performance = null) {
+function addMessage(sessionId, role, content, performance = null, reasoning = "") {
   return new Promise((resolve, reject) => {
     const msg = {
       sessionId: Number(sessionId),
       role,
       content,
       timestamp: Date.now(),
-      performance
+      performance,
+      reasoning
     };
     if (useFallback) {
       msg.id = Date.now() + Math.random();

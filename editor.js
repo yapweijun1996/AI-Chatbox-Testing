@@ -75,15 +75,16 @@ async function triggerCompletionStream() {
   DOM.statusText.textContent = getLocaleString("headerGenerating");
   
   try {
-    const perfData = await streamChatCompletion(activeConfig, messages, ({ fullText }) => {
-      aiBubble.innerHTML = parseMarkdown(fullText);
+    const perfData = await streamChatCompletion(activeConfig, messages, ({ fullText, fullReasoning }) => {
+      renderAssistantBubble(aiBubble, fullText, null, fullReasoning);
       scrollToBottomSmart();
     }, activeAbortController.signal);
     perfData.model = activeConfig.model;
-    aiBubble.innerHTML += renderPerformanceBadge(perfData);
-    if (window.Prism) Prism.highlightAllUnder(aiBubble);
+    const finalParts = renderAssistantBubble(aiBubble, perfData.fullText, perfData, perfData.reasoning);
+    perfData.fullText = finalParts.content;
+    perfData.reasoning = finalParts.reasoning;
     scrollToBottomSmart();
-    const assistantMsg = await addMessage(activeSessionId, "assistant", perfData.fullText, perfData);
+    const assistantMsg = await addMessage(activeSessionId, "assistant", perfData.fullText, perfData, perfData.reasoning);
     attachMessageActions(aiBubble.closest(".message-item"), "assistant", assistantMsg.id);
     await loadSessions();
   } catch (err) {

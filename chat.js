@@ -9,9 +9,71 @@ function setSendButtonState(isGen) {
   DOM.sendBtn.classList.toggle("generating", isGen);
 }
 
+function extractThinkBlocks(text) {
+  const source = text || "";
+  const lower = source.toLowerCase();
+  const answerParts = [];
+  const reasoningParts = [];
+  let cursor = 0;
+
+  while (cursor < source.length) {
+    const openIndex = lower.indexOf("<think", cursor);
+    if (openIndex === -1) {
+      answerParts.push(source.slice(cursor));
+      break;
+    }
+
+    const openEnd = source.indexOf(">", openIndex);
+    if (openEnd === -1) {
+      answerParts.push(source.slice(cursor, openIndex));
+      break;
+    }
+
+    answerParts.push(source.slice(cursor, openIndex));
+    const closeIndex = lower.indexOf("</think>", openEnd + 1);
+    if (closeIndex === -1) {
+      reasoningParts.push(source.slice(openEnd + 1));
+      break;
+    }
+
+    reasoningParts.push(source.slice(openEnd + 1, closeIndex));
+    cursor = closeIndex + "</think>".length;
+  }
+
+  return {
+    content: answerParts.join(""),
+    reasoning: reasoningParts.join("\n\n").trim()
+  };
+}
+
+function getAssistantDisplayParts(content, reasoning = "") {
+  const extracted = extractThinkBlocks(content);
+  const reasoningParts = [reasoning, extracted.reasoning].filter(part => part && part.trim());
+  return {
+    content: extracted.content,
+    reasoning: reasoningParts.join("\n\n").trim()
+  };
+}
+
+function renderReasoningBlock(reasoning) {
+  if (!reasoning || !reasoning.trim()) return "";
+  const label = escapeHTML(getLocaleString("reasoningLabel"));
+  return `<details class="reasoning-block" open><summary>${svgIcon("cpu", 13)} ${label}</summary><div class="reasoning-content">${parseMarkdown(reasoning)}</div></details>`;
+}
+
+function renderAssistantBubble(bubble, content, performanceData = null, reasoning = "") {
+  const parts = getAssistantDisplayParts(content, reasoning);
+  bubble.innerHTML = `${renderReasoningBlock(parts.reasoning)}${parseMarkdown(parts.content)}`;
+  if (performanceData) {
+    bubble.innerHTML += renderPerformanceBadge(performanceData);
+  }
+  if (window.Prism) Prism.highlightAllUnder(bubble);
+  return parts;
+}
+
 function renderMessages(messages) {
   DOM.messagesList.innerHTML = "";
-  messages.forEach(msg => appendMessageToDOM(msg.role, msg.content, msg.performance, msg.id));
+  messages.forEach(msg => appendMessageToDOM(msg.role, msg.content, msg.performance, msg.id, msg.reasoning));
   scrollToBottomSmart(true);
 }
 
@@ -42,7 +104,7 @@ function attachMessageActions(item, role, messageId) {
   item.appendChild(renderMessageActions(role, messageId));
 }
 
-function appendMessageToDOM(role, content, performanceData = null, messageId = null) {
+function appendMessageToDOM(role, content, performanceData = null, messageId = null, reasoning = "") {
   const item = document.createElement("div");
   item.className = `message-item ${role}`;
   item.dataset.id = messageId;
@@ -51,12 +113,11 @@ function appendMessageToDOM(role, content, performanceData = null, messageId = n
   bubble.className = "message-bubble";
   if (content === "Thinking...") {
     bubble.innerHTML = `<div class="thinking-dots"><span class="thinking-dot"></span><span class="thinking-dot"></span><span class="thinking-dot"></span></div>`;
+  } else if (role === "assistant") {
+    renderAssistantBubble(bubble, content, performanceData, reasoning);
   } else {
     bubble.innerHTML = parseMarkdown(content);
     if (window.Prism) Prism.highlightAllUnder(bubble);
-  }
-  if (role === "assistant" && performanceData) {
-    bubble.innerHTML += renderPerformanceBadge(performanceData);
   }
   item.appendChild(bubble);
 
@@ -150,15 +211,16 @@ async function handleSend() {
   DOM.statusText.textContent = getLocaleString("headerGenerating");
   try {
     const messages = await getMessages(activeSessionId);
-    const perfData = await streamChatCompletion(activeConfig, messages, ({ fullText }) => {
-      aiBubble.innerHTML = parseMarkdown(fullText);
+    const perfData = await streamChatCompletion(activeConfig, messages, ({ fullText, fullReasoning }) => {
+      renderAssistantBubble(aiBubble, fullText, null, fullReasoning);
       scrollToBottomSmart();
     }, activeAbortController.signal);
     perfData.model = activeConfig.model;
-    aiBubble.innerHTML += renderPerformanceBadge(perfData);
-    if (window.Prism) Prism.highlightAllUnder(aiBubble);
+    const finalParts = renderAssistantBubble(aiBubble, perfData.fullText, perfData, perfData.reasoning);
+    perfData.fullText = finalParts.content;
+    perfData.reasoning = finalParts.reasoning;
     scrollToBottomSmart();
-    const assistantMsg = await addMessage(activeSessionId, "assistant", perfData.fullText, perfData);
+    const assistantMsg = await addMessage(activeSessionId, "assistant", perfData.fullText, perfData, perfData.reasoning);
     attachMessageActions(aiBubble.closest(".message-item"), "assistant", assistantMsg.id);
     await loadSessions();
   } catch (err) {

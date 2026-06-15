@@ -7,6 +7,7 @@ async function streamChatCompletion(config, messages, onChunk, signal) {
   let ttft = 0;
   let fbl = 0;
   let aiResponse = "";
+  let reasoningResponse = "";
 
   const apiPayload = {
     model: config.model,
@@ -36,39 +37,62 @@ async function streamChatCompletion(config, messages, onChunk, signal) {
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder("utf-8");
+  let sseBuffer = "";
+
+  function handleSseLine(line) {
+    const cleaned = line.trim();
+    if (!cleaned || cleaned === "data: [DONE]") return;
+    if (!cleaned.startsWith("data: ")) return;
+
+    const parsed = JSON.parse(cleaned.slice(6));
+    const deltaObj = parsed.choices?.[0]?.delta || {};
+    const delta = typeof deltaObj.content === "string" ? deltaObj.content : "";
+    const reasoningDelta = [
+      deltaObj.reasoning_content,
+      deltaObj.reasoningContent,
+      deltaObj.reasoning,
+      deltaObj.thinking
+    ].find(value => typeof value === "string") || "";
+    if (!firstTokenReceived && (delta.trim().length > 0 || reasoningDelta.trim().length > 0)) {
+      firstTokenReceived = true;
+      ttft = performance.now() - streamStartTime;
+    }
+    if (delta || reasoningDelta) {
+      aiResponse += delta;
+      reasoningResponse += reasoningDelta;
+      onChunk({ delta, fullText: aiResponse, reasoningDelta, fullReasoning: reasoningResponse });
+    }
+  }
 
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
 
-    const chunk = decoder.decode(value, { stream: true });
-    const lines = chunk.split("\n");
+    sseBuffer += decoder.decode(value, { stream: true });
+    const lines = sseBuffer.split(/\r?\n/);
+    sseBuffer = lines.pop() || "";
 
     for (const line of lines) {
-      const cleaned = line.trim();
-      if (cleaned === "data: [DONE]") continue;
-      if (cleaned.startsWith("data: ")) {
-        try {
-          const parsed = JSON.parse(cleaned.slice(6));
-          const delta = parsed.choices?.[0]?.delta?.content || "";
-          if (!firstTokenReceived && delta.trim().length > 0) {
-            firstTokenReceived = true;
-            ttft = performance.now() - streamStartTime;
-          }
-          if (delta) {
-            aiResponse += delta;
-            onChunk({ delta, fullText: aiResponse });
-          }
-        } catch (err) {
-          // Ignore parse errors on partial chunks
-        }
+      try {
+        handleSseLine(line);
+      } catch (err) {
+        // Ignore malformed provider packets without breaking the stream.
       }
+    }
+  }
+
+  sseBuffer += decoder.decode();
+  if (sseBuffer.trim()) {
+    try {
+      handleSseLine(sseBuffer);
+    } catch (err) {
+      // Ignore a trailing malformed provider packet.
     }
   }
 
   const streamEndTime = performance.now();
   const e2e = streamEndTime - streamStartTime;
-  const tokenCount = Math.max(1, aiResponse.length / 3.2);
+  const tokenCount = Math.max(1, (aiResponse.length + reasoningResponse.length) / 3.2);
   const decodeDuration = (e2e - ttft) / 1000;
   const tps = decodeDuration > 0 ? (tokenCount / decodeDuration) : 0;
   const itl = tokenCount > 0 ? ((e2e - ttft) / tokenCount) : 0;
@@ -80,6 +104,7 @@ async function streamChatCompletion(config, messages, onChunk, signal) {
     itl,
     tokenCount,
     e2e,
-    fullText: aiResponse
+    fullText: aiResponse,
+    reasoning: reasoningResponse
   };
 }

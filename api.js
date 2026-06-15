@@ -8,12 +8,20 @@ async function streamChatCompletion(config, messages, onChunk, signal) {
   let fbl = 0;
   let aiResponse = "";
   let reasoningResponse = "";
+  const requestMessages = messages.map(m => ({ role: m.role, content: m.content }));
+  if (config.systemPrompt) {
+    requestMessages.unshift({ role: "system", content: config.systemPrompt });
+  }
 
   const apiPayload = {
     model: config.model,
-    messages: messages.map(m => ({ role: m.role, content: m.content })),
+    messages: requestMessages,
     stream: true
   };
+
+  if (typeof config.temperature === "number") {
+    apiPayload.temperature = config.temperature;
+  }
 
   if (config.reasoningEffort && config.reasoningEffort !== "none") {
     apiPayload.reasoning_effort = config.reasoningEffort;

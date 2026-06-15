@@ -6,7 +6,7 @@ async function switchProviderTab(provider) {
   localStorage.setItem("lastProvider", provider);
   DOM.providerTabs.forEach(t => t.classList.toggle("active", t.dataset.provider === provider));
 
-  DOM.reasoningGroup.style.display = provider === "openai" ? "flex" : "none";
+  DOM.reasoningGroup.style.display = "flex";
 
   const savedConfig = await getSetting(provider);
   activeConfig = savedConfig;
@@ -14,13 +14,17 @@ async function switchProviderTab(provider) {
     DOM.baseUrlInput.value = savedConfig.baseUrl;
     DOM.apiKeyInput.value = deobfuscate(savedConfig.apiKey);
     DOM.modelInput.value = savedConfig.model;
-    if (provider === "openai") DOM.reasoningEffort.value = savedConfig.reasoningEffort || "none";
+    DOM.systemPromptInput.value = savedConfig.systemPrompt || "";
+    DOM.temperatureInput.value = savedConfig.temperature ?? "";
+    DOM.reasoningEffort.value = savedConfig.reasoningEffort || "none";
     updateStatus(true);
   } else {
     DOM.baseUrlInput.value = DEFAULT_URLS[provider] || "";
     DOM.apiKeyInput.value = "";
     DOM.modelInput.value = DEFAULT_MODELS[provider] || "";
-    if (provider === "openai") DOM.reasoningEffort.value = "none";
+    DOM.systemPromptInput.value = "";
+    DOM.temperatureInput.value = "";
+    DOM.reasoningEffort.value = "none";
     updateStatus(false);
   }
   DOM.currentModelText.textContent = `${provider.toUpperCase()} / ${DOM.modelInput.value || "Not Configured"}`;
@@ -48,9 +52,16 @@ async function refreshTabIndicators() {
 
 DOM.providerForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const config = { baseUrl: DOM.baseUrlInput.value.trim(), apiKey: obfuscate(DOM.apiKeyInput.value.trim()), model: DOM.modelInput.value.trim() };
-  if (currentProvider === "openai") {
-    config.reasoningEffort = DOM.reasoningEffort.value;
+  const temperature = Number(DOM.temperatureInput.value);
+  const config = {
+    baseUrl: DOM.baseUrlInput.value.trim(),
+    apiKey: obfuscate(DOM.apiKeyInput.value.trim()),
+    model: DOM.modelInput.value.trim(),
+    systemPrompt: DOM.systemPromptInput.value.trim(),
+    reasoningEffort: DOM.reasoningEffort.value
+  };
+  if (DOM.temperatureInput.value.trim() !== "" && Number.isFinite(temperature)) {
+    config.temperature = Math.min(2, Math.max(0, temperature));
   }
   await saveSetting(currentProvider, config);
   activeConfig = config;

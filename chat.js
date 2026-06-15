@@ -9,6 +9,21 @@ function setSendButtonState(isGen) {
   DOM.sendBtn.classList.toggle("generating", isGen);
 }
 
+let reasoningScrollLockUntil = 0;
+
+function lockReasoningScroll() {
+  reasoningScrollLockUntil = performance.now() + 1200;
+}
+
+function isReasoningScrollLocked() {
+  return performance.now() < reasoningScrollLockUntil;
+}
+
+function guardReasoningScroll(event) {
+  lockReasoningScroll();
+  event.stopPropagation();
+}
+
 function extractThinkBlocks(text) {
   const source = text || "";
   const lower = source.toLowerCase();
@@ -58,12 +73,36 @@ function getAssistantDisplayParts(content, reasoning = "") {
 function renderReasoningBlock(reasoning) {
   if (!reasoning || !reasoning.trim()) return "";
   const label = escapeHTML(getLocaleString("reasoningLabel"));
-  return `<details class="reasoning-block" open><summary>${svgIcon("cpu", 13)} ${label}</summary><div class="reasoning-content">${parseMarkdown(reasoning)}</div></details>`;
+  return `<details class="reasoning-block" open><summary>${svgIcon("cpu", 13)} ${label}</summary><div class="reasoning-content" tabindex="0">${parseMarkdown(reasoning)}</div></details>`;
+}
+
+function attachReasoningScrollGuards(root) {
+  root.querySelectorAll(".reasoning-content").forEach(el => {
+    if (el.dataset.scrollGuard === "true") return;
+    el.dataset.scrollGuard = "true";
+    ["wheel", "touchmove", "pointerdown", "scroll"].forEach(eventName => {
+      el.addEventListener(eventName, guardReasoningScroll, { passive: true });
+    });
+  });
 }
 
 function renderAssistantBubble(bubble, content, performanceData = null, reasoning = "") {
+  const previousBlock = bubble.querySelector(".reasoning-block");
+  const previousContent = bubble.querySelector(".reasoning-content");
+  const wasOpen = previousBlock ? previousBlock.open : true;
+  const previousScrollTop = previousContent ? previousContent.scrollTop : 0;
+  const wasAtBottom = previousContent
+    ? previousContent.scrollHeight - previousContent.scrollTop - previousContent.clientHeight <= 8
+    : true;
   const parts = getAssistantDisplayParts(content, reasoning);
   bubble.innerHTML = `${renderReasoningBlock(parts.reasoning)}${parseMarkdown(parts.content)}`;
+  const nextBlock = bubble.querySelector(".reasoning-block");
+  const nextContent = bubble.querySelector(".reasoning-content");
+  if (nextBlock) nextBlock.open = wasOpen;
+  if (nextContent) {
+    nextContent.scrollTop = wasAtBottom ? nextContent.scrollHeight : previousScrollTop;
+  }
+  attachReasoningScrollGuards(bubble);
   if (performanceData) {
     bubble.innerHTML += renderPerformanceBadge(performanceData);
   }
@@ -183,6 +222,7 @@ function shouldScroll() {
 }
 
 function scrollToBottomSmart(force = false) {
+  if (!force && isReasoningScrollLocked()) return;
   if (force || shouldScroll()) {
     DOM.chatViewport.scrollTop = DOM.chatViewport.scrollHeight;
   }
